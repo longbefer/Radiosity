@@ -1,0 +1,167 @@
+	Color r_max = Black;
+	size_t i = 0;
+	while (1) {
+		// 选取i使得max ri
+		for (size_t j = 0; j < n; ++j)
+			if (r[j] > r_max) {
+				r_max = r[j];
+				i = j;
+			}
+		patchs[i].excident += r_max;
+		Color temp = r_max;
+
+		double area = patchs[i].GetArea();
+		double factor = 0.0;
+		for (size_t j = 0; j < n; ++j) {
+			if (j < i) factor = factors[(i + 1ULL) * (i + 2ULL) / 2ULL + (j - 1ULL)];
+			else factor = factors[i * (i + 1ULL) / 2ULL + j];
+			r[j] += factor * area * temp;
+		}
+		r_max = Black;
+	}
+	
+	
+	
+	
+	
+		for (int i = 0; i < n; ++i) {
+		if (!bFinish) {
+			for (int j = i; j < n; ++j) {
+				// 存储形状因子
+				double fac = GetViewFactor(patchs[i], patchs[j]);
+				factors[i][j] = patchs[j].GetArea() * fac;
+				factors[j][i] = patchs[i].GetArea() * fac;
+			}
+		}
+		// 收集所有面片的辐射度
+		for (int j = 0; j < n; ++j)
+			patchs[i].incident += patchs[j].excident * factors[i][j];
+		// 计算该面片的辐射度
+		auto& I = patchs[i].incident;
+		auto& R = patchs[i].obj->GetReflectance();
+		auto& E = patchs[i].obj->GetEmmision();
+		patchs[i].excident = ((I * R) + E).Clamp();
+	}
+	bFinish = true;
+	
+	
+	
+		for (int i = 0; i < n; ++i) 
+		for (int j = 0; j <= i; ++j) 
+			factors[i * (i + 1) / 2 + j] = GetViewFactor(patchs[i], patchs[j]);
+	int index = 0;
+	Color t_max = Black;
+	while (1) {
+		// 选取index为最大的\detaB_jA_j
+		for (int i = 0; i < n; ++i) {
+			Color detaBjAi = increase[i] * patchs[i].GetArea();
+			if (detaBjAi > t_max) {
+				t_max = detaBjAi;
+				index = i;
+			}
+		}
+
+		Color rad = Black;
+		for (int i = 0; i < n; ++i) {
+			int factor_i_j = 0;
+			if (i < index) factor_i_j = index * (index + 1ULL) / 2ULL + i;
+			else factor_i_j = i * (i + 1ULL) / 2ULL + index;
+
+			rad = patchs[i].obj->GetReflectance() * t_max * factors[factor_i_j];
+			increase[i] += rad;
+			patchs[i].excident += rad;
+			patchs[i].excident.Clamp();
+		}
+		increase[index] = Black;
+		t_max = Black;
+	}
+	
+	
+	
+		// 获取能量最大的面片的索引
+	int index = 0;
+	// 获取能量最大的面片可以释放的能量（注，在这里此项乘以了面积）
+	Color maxColor = Black;
+	// 泛光
+	Color ambient = Black;
+	// 泛光反射项
+	Color invAvgReflect = 1.0 / (White - avgReflect);
+	do {
+		maxColor = Black; ambient = Black;
+		// 在每一个面片中，选择最大的待辐射能量
+		for (int i = 0; i < n; ++i) {
+			Color currentColor = increase[i] * patchs[i].GetArea();
+			if (currentColor > maxColor) {
+				maxColor = currentColor;
+				index = i;
+			}
+			ambient += currentColor;
+		}
+		ambient /= sumArea;
+		ambient *= invAvgReflect;
+		// 给每个面片添加辐射能量
+		#pragma omp parallel for schedule(dynamic, 1) // OpenMP
+		for (int i = 0; i < n; ++i) {
+			//int iToj = 0;
+			// 获取折半矩阵中对应的形状因子
+			//if (i < index) iToj = index * (index + 1ULL) / 2ULL + i;
+			//else iToj = i * (i + 1ULL) / 2ULL + index;
+			// 设置该面片的增量
+			Color factor = GetViewFactor(patchs[index], patchs[i]) * patchs[i].obj->GetReflectance();
+			Color rad = factor * maxColor;
+			increase[i] += rad;
+			//patchs[i].excident += rad;                        // 不添加泛光项
+			patchs[i].excident += (rad + ambient * factor);     // 添加泛光项
+			patchs[i].excident.Clamped();
+		}
+		increase[index] = Black;
+	} while (maxColor > Color(kEpsilon, kEpsilon, kEpsilon, kEpsilon)); // 解近0时收敛并停止
+	
+	
+	// 获取能量最大的面片的索引
+	int index = 0;
+	// 获取能量最大的面片可以释放的能量（注，在这里此项乘以了面积）
+	Color maxColor = Black;
+	// 泛光
+	Color ambient = Black;
+	// 泛光反射项
+	Color invAvgReflect = 1.0 / (White - avgReflect);
+	do {
+		maxColor = Black; ambient = Black;
+		// 在每一个面片中，选择最大的待辐射能量
+		for (int i = 0; i < n; ++i) {
+			Color currentColor = increase[i] * patchs[i].GetArea();
+			if (currentColor > maxColor) {
+				maxColor = currentColor;
+				index = i;
+			}
+			ambient += currentColor;
+		}
+		ambient /= sumArea;
+		ambient *= invAvgReflect;
+		// 给每个面片添加辐射能量
+		#pragma omp parallel for schedule(dynamic, 1) // OpenMP
+		for (int i = 0; i < n; ++i) {
+			//int iToj = 0;
+			// 获取折半矩阵中对应的形状因子
+			//if (i < index) iToj = index * (index + 1ULL) / 2ULL + i;
+			//else iToj = i * (i + 1ULL) / 2ULL + index;
+			// 设置该面片的增量
+			Color factor = GetViewFactor(patchs[index], patchs[i]) * patchs[i].obj->GetReflectance();
+			Color rad = factor * maxColor;
+			increase[i] += rad;
+			//patchs[i].excident += rad;                        // 不添加泛光项
+			patchs[i].excident += (rad + ambient * factor);     // 添加泛光项
+			patchs[i].excident.Clamped();
+		}
+		increase[index] = Black;
+	} while (maxColor > Color(kEpsilon, kEpsilon, kEpsilon, kEpsilon)); // 解近0时收敛并停止
+	
+	
+	
+	
+	
+	
+	
+	
+	
