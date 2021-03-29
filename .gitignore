@@ -32,12 +32,15 @@
 *.app
 
 # Visual Studio 
+.vs/#
+x64/#
 .vs/*
 x64/*
 *.aps
 
 # exclude
-!res/obj/*
+!res/obj/*.obj
+#!res/obj/#
 
 # custom 
 elOut.txt
