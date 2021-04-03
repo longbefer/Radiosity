@@ -45,7 +45,7 @@ public:
 	}
 	//virtual 
 	Color GetTextureImagePixel(const Texture&t) {
-		if (img == nullptr) return this->reflectance;
+		if (img.get() == nullptr || img->image.get() == nullptr) return this->reflectance;
 		/*检测图片的边界，防止越界*/
 		size_t u = static_cast<size_t>(t.u * img->bmp.bmWidth), v = static_cast<size_t>(t.v * img->bmp.bmHeight);
 		if (u < 0ULL) u = 0ULL; if (v < 0ULL) v = 0ULL;

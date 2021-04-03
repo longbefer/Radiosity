@@ -7,6 +7,8 @@
 #include "CAddObjectDlg.h"
 #include "MainFrm.h"
 
+extern volatile bool ENDDRAW;
+
 // CControlPanel
 
 IMPLEMENT_DYNCREATE(CControlPanel, CFormView)
@@ -106,6 +108,7 @@ void CControlPanel::OnBnClickedDeleteobject()
 		MessageBox(TEXT("当前渲染还未结束，请耐心等该渲染完成后删除物体。"), TEXT("警告"));
 		return;
 	}
+	while (!ENDDRAW) {} // 没有结束绘制则等待
 	// 删除选中的物体
 	POSITION fstSelect = lstObject.GetFirstSelectedItemPosition();
 	int location = static_cast<int>(reinterpret_cast<size_t>(fstSelect)) - 1;

@@ -17,6 +17,8 @@
 #include "SmoothTriangle.h"
 
 #include <atlconv.h> /* 编码转换 */
+extern volatile bool ENDDRAW;
+
 // CAddObjectDlg 对话框
 
 IMPLEMENT_DYNAMIC(CAddObjectDlg, CDialogEx)
@@ -153,6 +155,9 @@ void CAddObjectDlg::OnBnClickedConfirmadd()
 		bezierObj->Accelerate();
 	}
 	if (dynamic_cast<ObjFile*>(obj)) dynamic_cast<ObjFile*>(obj)->AddObject();
+
+	while (!ENDDRAW) {} // 没有结束绘制则等待
+	// 在场景中加入添加的文件
 	s->AddObject(obj);
 
 	OnOK();

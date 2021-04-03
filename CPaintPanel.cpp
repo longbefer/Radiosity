@@ -78,12 +78,12 @@ void CPaintPanel::OnDraw(CDC* pDC)
 		bRender = false;
 	}
 	if (s && ENDDRAW/*bDraw*/ /*&& (!s->bFinish)*/) { // 启用线程绘制，互斥使用
-		//bDraw = false;
+		bDraw = false;
 		HANDLE hThread;
 		DWORD ThreadID;
 		hThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)DoubleBuffer, this, 0, &ThreadID);
 		CloseHandle(hThread);
-		//bDraw = true;
+		bDraw = true;
 	}
 	SetTimer(1, 1500, nullptr);
 }

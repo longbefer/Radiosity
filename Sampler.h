@@ -72,8 +72,8 @@ public:
 		samples.x = x;
 		samples.y = y;
 
-		assert(samples < Point2d(0.0, 0.0), "random is error");
-		assert(samples > Point2d(1.0, 1.0), "random is error");
+		//assert(samples < Point2d(0.0, 0.0), "random is error");
+		//assert(samples > Point2d(1.0, 1.0), "random is error");
 
 		Vector3d a = v1 - v0;
 		Vector3d b = v2 - v0;
@@ -87,8 +87,8 @@ public:
 		samples.x = rand() * invRandomMax;
 		samples.y = rand() * invRandomMax;
 
-		assert(samples < Point2d(0.0, 0.0), "random is error");
-		assert(samples > Point2d(1.0, 1.0), "random is error");
+		//assert(samples < Point2d(0.0, 0.0), "random is error");
+		//assert(samples > Point2d(1.0, 1.0), "random is error");
 
 		return v0 + a * samples.x + b * samples.y;
 	}
