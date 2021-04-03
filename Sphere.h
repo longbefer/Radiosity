@@ -4,7 +4,6 @@ class Sphere :
     public GameObject
 {
 public:
-    Sphere() { Sphere::Sphere(ZERO); }
     Sphere(const Point3d& p, const double& r = 1.0) : center(p), r(r) {
         N1 = divide;
         N2 = 2 * divide;

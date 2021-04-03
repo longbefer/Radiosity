@@ -6,6 +6,7 @@ class SmoothTriangle :
     public Triangle
 {
 public:
+    using Triangle::Triangle;
     void SetTexture(const Texture&t1, const Texture&t2, const Texture&t3) {
         texture[0] = t1; texture[1] = t2; texture[2] = t3;
     }
@@ -54,11 +55,11 @@ private:
         P3 eachPoint[4][3];
         eachPoint[0][0] = point3[0];
         eachPoint[0][1] = mid[0];
-        eachPoint[0][2] = mid[2];
+        eachPoint[0][2] = mid[1];
         SmoothDividenPatch(patchs, eachPoint[0], n - 1);
         eachPoint[1][0] = mid[0];
         eachPoint[1][1] = point3[1];
-        eachPoint[1][2] = mid[1];
+        eachPoint[1][2] = mid[2];
         SmoothDividenPatch(patchs, eachPoint[1], n - 1);
         eachPoint[2][0] = mid[2];
         eachPoint[2][1] = mid[1];

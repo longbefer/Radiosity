@@ -3,6 +3,8 @@
 #include "Light.h"
 #include "Paint.h"
 #include "Projection.h"
+#include "SmoothRectangle.h"
+#include "Sampler.h"
 extern volatile bool ENDPROGRAM;
 #if !USERADIATIONSMOOTH
 void Radiation::Init()
@@ -58,10 +60,10 @@ void Radiation::Draw(CDC* pDC)
 				point3[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
 				point3[loop].excident = patch.excident;
 				point3[loop].normal = patch.normal;
-				//point3[loop].texture;
+				point3[loop].texture = patch.vertices[loop].texture;
 			}
 			paint.SetPoint(point3[0], point3[1], point3[2]);
-			paint.GouraudShading(pDC);
+			paint.GouraudShading(pDC, patch);
 		}
 		else
 		{
@@ -69,12 +71,12 @@ void Radiation::Draw(CDC* pDC)
 				point4[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
 				point4[loop].excident = patch.excident;
 				point4[loop].normal = patch.normal;
-				//point4[loop].texture;
+				point4[loop].texture = patch.vertices[loop].texture;
 			}
 			paint.SetPoint(point4[0], point4[1], point4[2]);
-			paint.GouraudShading(pDC);
+			paint.GouraudShading(pDC, patch);
 			paint.SetPoint(point4[0], point4[2], point4[3]);
-			paint.GouraudShading(pDC);
+			paint.GouraudShading(pDC, patch);
 		}
 	}
 }
@@ -98,7 +100,7 @@ void Radiation::Calculate()
 			patchs[i].incident += patchs[j].excident * factors[i][j];
 		// 计算该面片的辐射度
 		auto& I = patchs[i].incident;
-		auto& R = patchs[i].obj->GetReflectance();
+		auto& R = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
 		auto& E = patchs[i].obj->GetEmmision();
 		patchs[i].excident = ((I * R) + E).Clamp();
 	}
@@ -119,8 +121,13 @@ void Radiation::Calculate()
 			patchs[i].incident += patchs[j].excident * factors[i][j];
 	}
 	// 然后计算表面辐射度
-	for (int i = 0; i < n; ++i)
-		patchs[i].excident = (patchs[i].incident * patchs[i].obj->GetReflectance() + patchs[i].obj->GetEmmision()).Clamp();
+	for (int i = 0; i < n; ++i) {
+		auto& I = patchs[i].incident;
+		auto& R = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
+		auto& E = patchs[i].obj->GetEmmision();
+		patchs[i].excident = ((I * R) + E).Clamp();
+		//patchs[i].excident = (patchs[i].incident * patchs[i].obj->GetReflectance() + patchs[i].obj->GetEmmision()).Clamp();
+	}
 	bFinish = true;
 #endif 
 #ifdef Southwell
@@ -131,13 +138,13 @@ void Radiation::Calculate()
 	// 泛光
 	Color ambient = Black;
 	// 泛光反射项
-	Color invAvgReflect = 1.0 / (White - avgReflect);
+	const Color invAvgReflect = 1.0 / (White - avgReflect);
 	do {
 		maxColor = Black; ambient = Black;
 		// 在每一个面片中，选择最大的待辐射能量
 		for (int i = 0; i < n; ++i) {
 			Color currentColor = increase[i] * patchs[i].GetArea();
-			if (currentColor > maxColor) {
+			if (currentColor > maxColor) { // 关键在于如何定义颜色谁比谁大
 				maxColor = currentColor;
 				index = i;
 			}
@@ -148,11 +155,13 @@ void Radiation::Calculate()
 		// 给每个面片添加辐射能量
 		#pragma omp parallel for schedule(dynamic, 1) // OpenMP
 		for (int i = 0; i < n; ++i) {
-			Color factor = GetViewFactor(patchs[index], patchs[i]) * patchs[i].obj->GetReflectance();
-			Color rad = factor * maxColor;
+			Color refect = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
+			double factor = GetViewFactor(patchs[index], patchs[i]);
+			Color rad = factor * refect * maxColor;
 			increase[i] += rad;
-			/*if (bFinish)*/ patchs[i].excident += rad;
-			//else patchs[i].excident += (rad + ambient * patchs[i].obj->GetReflectance());
+			if (bFinish) patchs[i].excident += rad;
+			else patchs[i].excident += (rad + ambient * refect);
+			patchs[i].incident += factor * maxColor;
 			patchs[i].excident.Clamped();
 		}
 		increase[index] = Black;
@@ -165,7 +174,7 @@ void Radiation::Calculate()
 double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 {
 	if (&in == &out) return 0.0;
-
+#if 0 // 是否使用多点采样来绘制
 	// 几何中心
 	Point3d outCenter = (out.vertices[0].position + out.vertices[1].position + out.vertices[2].position) / 3.0;
 	Point3d inCenter = (in.vertices[0].position + in.vertices[1].position + in.vertices[2].position) / 3.0;
@@ -194,6 +203,51 @@ double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 	double invLength = 1.0 / pointNormal.Length_Square();
 
 	return cosij * cosji * inv_pi * invLength;
+#else 
+#ifdef Southwell
+	int samplerNumber = 16;   // 采样的数量
+#else 
+	int samplerNumber = 256;  // 采样点数量
+#endif
+	Sampler sampler[2];       // 两个面片分别采样
+	double avg_factor = 0.0;  // 获取平均的形状因子
+
+	for (int i = 0; i < samplerNumber; ++i) {
+		Point3d inPoint = (in.vertices.size() == 3ULL) ? // 若点为三角形则使用三角形采样，否则矩形采样
+			sampler[0].TriangleSample(in.vertices[0].position, in.vertices[1].position, in.vertices[2].position) :
+			sampler[0].RectangleSample(in.vertices[0].position, in.vertices[1].position - in.vertices[0].position,
+				in.vertices[3].position - in.vertices[0].position);
+		Point3d outPoint = (out.vertices.size() == 3ULL) ?
+			sampler[1].TriangleSample(out.vertices[0].position, out.vertices[1].position, out.vertices[2].position) :
+			sampler[1].RectangleSample(out.vertices[0].position, out.vertices[1].position - out.vertices[0].position,
+				out.vertices[3].position - out.vertices[0].position);
+
+		const Vector3d pointNormal = outPoint - inPoint;
+		Vector3d vectorij = pointNormal.Normalized();
+		double cosij = Dot(in.normal.Normalized(), vectorij);
+		double cosji = Dot(out.normal.Normalized(), -vectorij);
+
+		// 面片之间相互可见
+		if (cosij <= 0.0 || cosji <= 0.0)
+			return 0.0;
+
+		double t = 1.0E10;
+		Ray ray(inPoint, vectorij);
+
+		// 两面片之间的距离
+		double tHit = pointNormal.Distance();
+
+		// 判断是否击中面片
+		if (hitObject) t = hitObject(ray);
+		else throw std::bad_function_call(); // need init hitObject function
+		if (std::fabs(t - tHit) > kEpsilon)
+			return 0.0;
+
+		double invLength = 1.0 / pointNormal.Length_Square();
+		avg_factor += cosij * cosji * inv_pi * invLength;
+	}
+	return avg_factor / static_cast<double>(samplerNumber);
+#endif
 }
 #else
 void Radiation::Init()
@@ -245,7 +299,7 @@ void Radiation::Draw(CDC* pDC)
 				point3[loop].texture = patch.vertices[loop].texture;
 			}
 			paint.SetPoint(point3[0], point3[1], point3[2]);
-			paint.GouraudShading(pDC);
+			paint.GouraudShading(pDC, patch);
 		}
 		else
 		{
@@ -256,9 +310,9 @@ void Radiation::Draw(CDC* pDC)
 				point4[loop].texture = patch.vertices[loop].texture;
 			}
 			paint.SetPoint(point4[0], point4[1], point4[2]);
-			paint.GouraudShading(pDC);
+			paint.GouraudShading(pDC, patch);
 			paint.SetPoint(point4[0], point4[2], point4[3]);
-			paint.GouraudShading(pDC);
+			paint.GouraudShading(pDC, patch);
 		}
 	}
 }
@@ -284,19 +338,28 @@ void Radiation::Calculate()
 		// 给每个面片添加辐射能量
 #pragma omp parallel for schedule(dynamic, 1) // OpenMP
 		for (int i = 0; i < n; ++i) {
-			Color rad = Black;
+			Color rad = Black, incid = Black; // rad 为出射辐射度增量， incid 为入射辐射度
 			for (int k = 0; k < patchs[i].vertices.size(); ++k) {
-				Color signalRad = Black;
-				for (int s = 0; s < patchs[index].vertices.size(); ++s)
-					signalRad += GetViewFactor(patchs[index], patchs[i], s, k) * patchs[i].obj->GetReflectance() * maxColor;
+				Color signalRad = Black, signalIncident = Black;
+				for (int s = 0; s < patchs[index].vertices.size(); ++s) {
+					double factor = GetViewFactor(patchs[index], patchs[i], s, k);
+					signalRad += factor * patchs[i].obj->GetReflectance() * maxColor;
+					signalIncident += factor * maxColor;
+				}
 				signalRad /= static_cast<double>(patchs[index].vertices.size());
+				signalIncident /= static_cast<double>(patchs[index].vertices.size());
 				patchs[i].vertices[k].excident += signalRad;
 				patchs[i].vertices[k].excident.Clamped();
+				patchs[i].vertices[k].incident += signalIncident;
 				rad += signalRad;
+				incid += signalIncident;
 			}
-			increase[i] += (rad / static_cast<double>(patchs[i].vertices.size()));
-			patchs[i].excident += rad;
+			Color avgRad = rad / static_cast<double>(patchs[i].vertices.size());
+			incid /= static_cast<double>(patchs[i].vertices.size());
+			increase[i] += avgRad;
+			patchs[i].excident += avgRad;
 			patchs[i].excident.Clamped();
+			patchs[i].incident += incid; // 给入射辐射度增加能量，便于之后的计算
 		}
 		increase[index] = Black;
 		if (ENDPROGRAM) return;  // 当结束程序时，退出渲染
@@ -334,7 +397,7 @@ void Radiation::Calculate()
 			patchs[j].incident += (outPatchIncident / static_cast<double>(outSize));
 		}
 		auto& I = patchs[i].incident;
-		auto& R = patchs[i].obj->GetReflectance();
+		auto& R = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
 		auto& E = patchs[i].obj->GetEmmision();
 		// 每个点的辐射度
 		for (size_t k = 0; k < patchs[i].vertices.size(); ++k)

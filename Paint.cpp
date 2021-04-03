@@ -46,7 +46,7 @@ void Paint::SetPoint(CP3 P0, CP3 P1, CP3 P2)
 	point2.texture = P2.texture;
 }
 
-void Paint::GouraudShading(CDC* pDC)
+void Paint::GouraudShading(CDC* pDC, const Patch&patch)
 {
 	//point0点为y坐标最小的点,point1点为y坐标最大的点,point2点的y坐标位于二者之间。如果y值相同，取x最小的点
 	SortVertex();
@@ -106,8 +106,12 @@ void Paint::GouraudShading(CDC* pDC)
 				//如果当前采样点的深度小于帧缓冲器中原采样点的深度)
 				if (CurrentDepth < zBuffer[offsetX][offsetY])
 				{
+					Color clr = LinearInterp(x, pLeft[n].position.x, pRight[n].position.x, pLeft[n].excident, pRight[n].excident);
 					// 若不存在纹理则进行颜色的线性插值，存在纹理则取纹理颜色与当前面片的incident相乘即为当前的颜色
-					CRGB clr = LinearInterp(x, pLeft[n].position.x, pRight[n].position.x, pLeft[n].excident, pRight[n].excident);
+					if (patch.obj && patch.obj->GetImage()) {
+						Texture t = LinearInterp(x, pLeft[n].position.x, pRight[n].position.x, pLeft[n].texture, pRight[n].texture);
+						clr = (patch.obj->GetTextureImagePixel(t) * patch.incident).Clamp();
+					}
 					zBuffer[offsetX][offsetY] = CurrentDepth;//使用当前采样点的深度更新深度缓冲器
 					pDC->SetPixelV(x, y, RGB(clr.r * 255, clr.g * 255, clr.b * 255));
 				}
@@ -131,6 +135,7 @@ void Paint::EdgeFlag(CPoint3 PStart, CPoint3 PEnd, BOOL bFeature)
 {
 	CRGB crColor = PStart.excident;
 	//Normal vect = PStart.normal;
+	Texture ptTexture = PStart.texture;
 	int dx = abs(PEnd.position.x - PStart.position.x);
 	int dy = abs(PEnd.position.y - PStart.position.y);
 	BOOL bInterChange = FALSE;//bInterChange为假，主位移方向为x方向
@@ -149,24 +154,24 @@ void Paint::EdgeFlag(CPoint3 PStart, CPoint3 PEnd, BOOL bFeature)
 	for (int i = 0; i < dx; i++)
 	{
 		if (bFeature)
-			pLeft[nIndex] = CPoint2(x, y, crColor);
+			pLeft[nIndex] = CPoint2(x, y, crColor, ptTexture);
 		else
-			pRight[nIndex] = CPoint2(x, y, crColor);
+			pRight[nIndex] = CPoint2(x, y, crColor, ptTexture);
 		if (bInterChange)
 		{
 			y += s2;
 			crColor = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.excident, PEnd.excident);
-			//vect = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.normal, PEnd.normal);//点矢量线性插值
+			ptTexture = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.texture, PEnd.texture);
 			if (bFeature)
-				pLeft[++nIndex] = CPoint2(x, y, crColor);
+				pLeft[++nIndex] = CPoint2(x, y, crColor, ptTexture);
 			else
-				pRight[++nIndex] = CPoint2(x, y, crColor);
+				pRight[++nIndex] = CPoint2(x, y, crColor, ptTexture);
 		}
 		else
 		{
 			x += s1;
 			crColor = LinearInterp(x, PStart.position.x, PEnd.position.x, PStart.excident, PEnd.excident);
-			//vect = LinearInterp(x, PStart.position.x, PEnd.position.x, PStart.normal, PEnd.normal);//点矢量线性插值
+			ptTexture = LinearInterp(x, PStart.position.x, PEnd.position.x, PStart.texture, PEnd.texture);
 		}
 		e += 2 * dy;
 		if (e >= 0)
@@ -175,18 +180,17 @@ void Paint::EdgeFlag(CPoint3 PStart, CPoint3 PEnd, BOOL bFeature)
 			{
 				x += s1;
 				crColor = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.excident, PEnd.excident);
-				//vect = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.normal, PEnd.normal);//点矢量线性插值
+				ptTexture = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.texture, PEnd.texture);
 			}
 			else
 			{
 				y += s2;
 				crColor = LinearInterp(x, PStart.position.x, PEnd.position.x, PStart.excident, PEnd.excident);
-				//vect = LinearInterp(x, PStart.position.x, PEnd.position.x, PStart.normal, PEnd.normal);//点矢量线性插值
-				//ptTexture = LinearInterp(y, PStart.position.y, PEnd.position.y, PStart.position.t, PEnd.position.t);//插值边任意一点纹理坐标
+				ptTexture = LinearInterp(x, PStart.position.x, PEnd.position.x, PStart.texture, PEnd.texture);
 				if (bFeature)
-					pLeft[++nIndex] = CPoint2(x, y, crColor);
+					pLeft[++nIndex] = CPoint2(x, y, crColor, ptTexture);
 				else
-					pRight[++nIndex] = CPoint2(x, y, crColor);
+					pRight[++nIndex] = CPoint2(x, y, crColor, ptTexture);
 			}
 			e -= 2 * dx;
 		}
@@ -209,6 +213,13 @@ Normal Paint::LinearInterp(double t, double tStart, double tEnd, Normal vStart, 
 	Normal vector;
 	vector = (tEnd - t) / (tEnd - tStart) * vStart + (t - tStart) / (tEnd - tStart) * vEnd;
 	return vector;
+}
+
+Texture Paint::LinearInterp(double t, double tStart, double tEnd, Texture vStart, Texture vEnd)
+{
+	Texture texture;
+	texture = vStart * ((tEnd - t) / (tEnd - tStart)) + vEnd * ((t - tStart) / (tEnd - tStart));
+	return texture;
 }
 
 CRGB Paint::LinearInterp(double t, double mStart, double mEnd, CRGB cStart, CRGB cEnd)

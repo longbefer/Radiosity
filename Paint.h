@@ -1,5 +1,5 @@
 #pragma once
-#include "P3.h"
+#include "Patch.h"
 
 class Paint
 {
@@ -7,10 +7,11 @@ public:
 	Paint();
 	virtual ~Paint();
 	void SetPoint(CP3 P0, CP3 P1, CP3 P2);//浮点数顶点构造三角形
-	void GouraudShading(CDC* pDC);//填充三角形
+	void GouraudShading(CDC* pDC, const Patch&);//填充三角形
 	void EdgeFlag(CPoint3 PStart, CPoint3 PEnd, BOOL bFeature);//边标记
 	void InitDeepBuffer(int Width, int Height, double Depth);
 	Normal  LinearInterp(double t, double tStart, double tEnd, Normal vStart, Normal vEnd);//法矢量线性插值
+	Texture LinearInterp(double t, double tStart, double tEnd, Texture vStart, Texture vEnd);
 	//纹理线性插值
 	CRGB LinearInterp(double t, double mStart, double mEnd, CRGB cStart, CRGB cEnd);//颜色线性插值
 	void SortVertex(void);//三角形顶点排序

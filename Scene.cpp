@@ -8,6 +8,10 @@
 #include "Teapot.h"
 #include "Sphere.h"
 //#include "ObjFile.h"
+#include "SmoothRectangle.h"
+#include "SmoothTriangle.h"
+
+#include "resource.h"
 
 Scene::Scene()
 {
@@ -62,9 +66,13 @@ double Scene::HitObject(const Ray& ray) const
 
 void Scene::Build()
 {
-	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 300, 100));
+	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 295, 100));
 	light->SetColor(White);
+#ifdef Southwell
+	light->SetEmmision(5 * White);
+#else
 	light->SetEmmision(White);
+#endif
 	light->SetRecursionTimes(3);
 
 	Color gray(0.6, 0.6, 0.6, 1.0);
@@ -117,14 +125,27 @@ void Scene::Build()
 	// 将box旋转（注意其使用应该是先使用含Set的变换之后不允许使用含Set的变换了）
 	//Matrix rotateMatrix = rotateMatrix.SetRotate(30, Matrix::AXIS::Y).Scale(100.0, 100.0, 100.0).Translate(0, -250, 50);
 	//box5->SetTransformMatrix(rotateMatrix);
+	// --------------------------------------------------------------------------
+	//SmoothTriangle* box5 = new SmoothTriangle(Point3d(-200, -200, -200), Point3d(200, -200, -200), Point3d(-200, -200, 200));
+	//box5->SetNormal(YNormal, YNormal, YNormal);
+	//box5->SetColor(Color(1.0, 1.0, 0.0));
+	//box5->SetEmmision(Black);
+	//box5->SetRecursionTimes(3);
+	// -------------------------------------------------------------------------------
+	SmoothRectangle* box5 = new SmoothRectangle(Point3d(-200, -200, -290), Vector3d(400, 0, 0), Vector3d(0, 400, 0), Normal(0, 0, 1, 0));
+	box5->SetColor(Black);
+	box5->SetEmmision(Black);
+	box5->SetRecursionTimes(4);
+	box5->SetTexture();
+	box5->SetTextureImage(IDB_BITMAP3);
 
 	// 茶壶
-	Teapot* t = new Teapot();
-	t->SetColor(Color(1.0, 1.0, 0.0, 0.0));
-	t->SetEmmision(Black);
-	t->SetRecursionTimes(4);
-	Matrix scaleMatrix = scaleMatrix.SetScale(50, 50, 50).Translate(0, -200, 0).Rotate(45, Matrix::AXIS::Y);
-	t->SetTransformMatrix(scaleMatrix);
+	//Teapot* t = new Teapot();
+	//t->SetColor(Color(1.0, 1.0, 0.0, 0.0));
+	//t->SetEmmision(Black);
+	//t->SetRecursionTimes(4);
+	//Matrix scaleMatrix = scaleMatrix.SetScale(50, 50, 50).Translate(0, -200, 0).Rotate(45, Matrix::AXIS::Y);
+	//t->SetTransformMatrix(scaleMatrix);
 
 	//double r = 300.0;
 	//double m = 0.5523;
@@ -169,8 +190,8 @@ void Scene::Build()
 	gameObject.push_back(box3);
 	gameObject.push_back(box4);
 	//gameObject.push_back(bezier);
-	//gameObject.push_back(box5);
-	gameObject.push_back(t);
+	gameObject.push_back(box5);
+	//gameObject.push_back(t);
 	//gameObject.push_back(obj);
 	gameObject.push_back(light);
 }

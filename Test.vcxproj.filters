@@ -25,6 +25,9 @@
     <Filter Include="界面">
       <UniqueIdentifier>{cc26bc8b-5ed3-4678-bea5-687e099c00f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="采样">
+      <UniqueIdentifier>{acc8b414-bdff-42fd-b4d9-04f23c4732e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Test.h">
@@ -123,6 +126,9 @@
     <ClInclude Include="ObjFile.h">
       <Filter>几何对象</Filter>
     </ClInclude>
+    <ClInclude Include="Sampler.h">
+      <Filter>采样</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp">
@@ -198,6 +204,18 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\Toolbar.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\2.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\bitmap3.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\3.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

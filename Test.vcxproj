@@ -209,6 +209,7 @@
     <ClInclude Include="Radiation.h" />
     <ClInclude Include="Rectangle.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Sampler.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SmoothRectangle.h" />
     <ClInclude Include="SmoothTriangle.h" />
@@ -252,6 +253,10 @@
     <None Include="res\Test.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\1.bmp" />
+    <Image Include="res\2.bmp" />
+    <Image Include="res\3.bmp" />
+    <Image Include="res\bitmap3.bmp" />
     <Image Include="res\Test.ico" />
     <Image Include="res\TestDoc.ico" />
     <Image Include="res\Toolbar.bmp" />

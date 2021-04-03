@@ -1,10 +1,10 @@
 #pragma once
 #include "Patch.h"
 // 是否使用多点采样（雾）
-#define USERADIATIONSMOOTH 0
+#define USERADIATIONSMOOTH 1
 // 注意，以下三种定义为不同算法的定义，请不要同时打开
 // -----------------------------------
-//#define Gauss_Siedel     // Gauss Siedel方法（暂未支持多点采样）
+//#define Gauss_Siedel     // Gauss Siedel方法
 //#define Normal_Result    // 解一般方程
 #define Southwell        // 逐步求精
 // -----------------------------------

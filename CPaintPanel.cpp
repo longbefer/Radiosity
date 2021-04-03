@@ -55,7 +55,7 @@ DWORD __stdcall DoubleBuffer(void* pWind)
 	memDC.SetViewportOrg(rect.Width() / 2, rect.Height() / 2);
 	//memDC.FillSolidRect(rect, pDC->GetBkColor());//设置背景色
 	if (pView->s) pView->s->Draw(&memDC); // 绘制对象
-	//s.Draw(pDC);
+	//if (pView->s) pView->s->Draw(pDC);
 	pDC->BitBlt(rect.left, rect.top, rect.Width(), rect.Height(), &memDC, -rect.Width() / 2, -rect.Height() / 2, SRCCOPY);//将内存memDC中的位图拷贝到显示pDC中
 	memDC.SelectObject(pOldBitmap);//恢复位图
 	NewBitmap.DeleteObject();//删除位图
@@ -134,6 +134,7 @@ DWORD __stdcall RenderThread(void*pWind)
 	ENDRENDER = false;
 	// 获取Scene进行渲染
 	CPaintPanel* pView = (CPaintPanel*)(pWind);
+	srand(static_cast<unsigned>(std::time(nullptr)));
 	if (pView->s) pView->s->Rendered();
 	else throw std::bad_alloc();
 	ENDRENDER = true;

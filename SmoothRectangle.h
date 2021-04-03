@@ -9,7 +9,8 @@ class SmoothRectangle :
     public User::Rectangle
 {
 public:
-    void SetTexture(const Texture& t1, const Texture& t2, const Texture& t3, const Texture&t4) {
+    using Rectangle::Rectangle;
+    void SetTexture(const Texture& t1 = BL, const Texture& t2 = BR, const Texture& t3 = TR, const Texture&t4 = TL) {
         texture[0] = t1; texture[1] = t2; texture[2] = t3; texture[3] = t4;
     }
     virtual std::vector<Patch> ObjectPatch() {

@@ -8,6 +8,9 @@
 #define IDR_TestTYPE                    130
 #define IDD_Control                     319
 #define IDD_AddObjDlg                   323
+#define IDB_BITMAP1                     327
+#define IDB_BITMAP2                     328
+#define IDB_BITMAP3                     330
 #define IDC_Confirm                     1005
 #define IDC_ObjectList                  1006
 #define IDC_AddObject                   1007
@@ -35,7 +38,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        327
+#define _APS_NEXT_RESOURCE_VALUE        331
 #define _APS_NEXT_COMMAND_VALUE         32774
 #define _APS_NEXT_CONTROL_VALUE         1025
 #define _APS_NEXT_SYMED_VALUE           310

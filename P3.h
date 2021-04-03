@@ -9,6 +9,7 @@
 #include <vector> /* 存储 */
 #include <memory> /* 智能指针 */
 #include <string> /* 字符操作 */
+#include <cassert> /* 断言 */
 
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -607,7 +608,7 @@ typedef Color CRGB;
 */
 class Texture {
 public:
-	Texture() { Texture(0.0, 0.0); };
+	Texture() { this->u = 0.0; this->v = 0.0; };
 	Texture(const double& u, const double& v) :u(u), v(v) {};
 public:
 	Texture operator+(const Texture& rhs) const {
@@ -625,6 +626,12 @@ public:
 	Texture operator/(const double& ratio) const {
 		if (ratio == 0) throw std::logic_error("zero");
 		return Texture(this->u / ratio, this->v / ratio);
+	}
+	Texture& operator=(const Texture& t) {
+		if (this == &t) return *this;
+		this->u = t.u;
+		this->v = t.v;
+		return *this;
 	}
 public:
 	double u, v;
@@ -654,6 +661,12 @@ public:
 		this->position.y = y;
 		this->position.z = z;
 		this->excident = c;
+	}
+	Point(const T& x, const T& y, const Color& c, const Texture& t) {
+		this->position.x = x;
+		this->position.y = y;
+		this->excident = c;
+		this->texture = t;
 	}
 public:
 	// 赋值运算符
@@ -703,6 +716,7 @@ public:
 		NewBitmap.GetBitmap(&bmp);
 		int nbytesize = bmp.bmWidthBytes * bmp.bmHeight;
 		image = std::make_unique<BYTE[]>(nbytesize);
+		NewBitmap.GetBitmapBits(nbytesize, (LPVOID)image.get());
 	}
 public:
 	std::unique_ptr<BYTE[]> image{ 0 };   // 图片内容，以颜色保存
