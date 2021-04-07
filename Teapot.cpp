@@ -126,6 +126,7 @@ void Teapot::ReadPatch(void)//读入茶壶曲面片
 
 void Teapot::Init()//绘制整壶
 {
+	bezier.DeleteObjects();
 	bezier.SetColor(reflectance);
 	bezier.SetEmmision(emmision);
 	bezier.SetRecursionTimes(divide);

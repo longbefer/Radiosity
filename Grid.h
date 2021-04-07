@@ -11,13 +11,13 @@ class Grid :
 public:
     Grid() :nx(0), ny(0), nz(0) {}
     virtual ~Grid() {
-        ResetCells();
-        this->DeleteObjects();
+        DeleteObjects();
     }
 
 public:
     virtual bool IsHit(const Ray&, double&) const;
     virtual std::vector<Patch> ObjectPatch() {
+        this->ResetCells();
         this->SetupCells();
         return Compound::ObjectPatch();
     }
@@ -25,6 +25,11 @@ public:
     virtual void SetTransformMatrix(const Matrix& matrix) {
         Compound::SetTransformMatrix(matrix);
         // SetupCells();
+    }
+
+    virtual void DeleteObjects() {
+        ResetCells();
+        Compound::DeleteObjects();
     }
 
 protected:

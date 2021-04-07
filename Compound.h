@@ -65,7 +65,7 @@ public:
 	void AddObject(GameObject* obj) {
 		this->objects.push_back(obj);
 	}
-	void DeleteObjects() {
+	virtual void DeleteObjects() {
 		size_t n = objects.size();
 		for (size_t i = 0; i < n; ++i) {
 			if (objects[i]) {

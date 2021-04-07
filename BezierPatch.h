@@ -3,7 +3,7 @@
 /*
 * Bezier网格类，用于产生Bezier网格
 * 注：与其他物体不同的是，必须先调用ReadControlPoint设置4*4个点
-* 否则无法绘制出Bezier图形
+* 否则无法绘制出Bezier图形（注意必须设置完成SetTransform后调用，否则变换不生效）
 * 可以调用Accelerate来启用使用使用包围盒加速
 */
 class BezierPatch :

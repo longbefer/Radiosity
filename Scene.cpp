@@ -122,10 +122,10 @@ void Scene::Build()
 	//box5->SetEmmision(Black);
 	//box5->SetRecursionTimes(5);
 	// --------------------------------------------------------------------------
-	Sphere* box5 = new Sphere(Point3d(0, -200, 0), 100);
-	box5->SetColor(gray);
-	box5->SetEmmision(Black);
-	box5->SetRecursionTimes(4);
+	//Sphere* box5 = new Sphere(Point3d(0, -200, 0), 100);
+	//box5->SetColor(gray);
+	//box5->SetEmmision(Black);
+	//box5->SetRecursionTimes(4);
 	// 将box旋转（注意其使用应该是先使用含Set的变换之后不允许使用含Set的变换了）
 	//Matrix rotateMatrix = rotateMatrix.SetRotate(0, Matrix::AXIS::Y).Scale(1.0, 1.0, 1.0).Translate(0, -50, 0);
 	//box5->SetTransformMatrix(rotateMatrix);
@@ -136,13 +136,13 @@ void Scene::Build()
 	//box5->SetEmmision(Black);
 	//box5->SetRecursionTimes(3);
 	// -------------------------------------------------------------------------------
-	//SmoothRectangle* box5 = new SmoothRectangle(Point3d(-200, -200, -290), Vector3d(400, 0, 0, 0.0), Vector3d(0, 400, 0, 0.0), Normal(0, 0, 1, 0.0));
-	//box5->SetNormal(ZNormal, ZNormal, ZNormal, ZNormal);
-	//box5->SetColor(White);
-	//box5->SetEmmision(Black);
-	//box5->SetRecursionTimes(4);
-	//box5->SetTexture();
-	//box5->SetTextureImage(IDB_BITMAP3);
+	SmoothRectangle* box5 = new SmoothRectangle(Point3d(-200, -200, -290), Vector3d(400, 0, 0, 0.0), Vector3d(0, 400, 0, 0.0), Normal(0, 0, 1, 0.0));
+	box5->SetNormal(ZNormal, ZNormal, ZNormal, ZNormal);
+	box5->SetColor(White);
+	box5->SetEmmision(Black);
+	box5->SetRecursionTimes(4);
+	box5->SetTexture();
+	box5->SetTextureImage(IDB_BITMAP3);
 	//box5->SetTransformMatrix(rotateMatrix);
 	//box5->SetTextureImage("res\\3.bmp");
 	//box5->SetTextureImage("D:\\User\\Picture\\Saved Pictures\\Temp\\888.jpg");

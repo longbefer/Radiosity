@@ -51,3 +51,4 @@ lib/jpeg-6b/*
 enc_temp_folder/*
 cpp.hint
 Test.aps
+.editorconfig

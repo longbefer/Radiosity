@@ -51,7 +51,7 @@ public:
 	}
 	//virtual 
 	Color GetTextureImagePixel(const Texture&t) {
-		if (img.get() == nullptr || img->image.get() == nullptr) return this->reflectance;
+		if (img == nullptr) return this->reflectance;
 		return img->GetImagePixel(t);
 	}
 

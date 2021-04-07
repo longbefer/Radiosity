@@ -239,6 +239,7 @@ void CAddObjectDlg::OnBnClickedConfirmadd()
 		// 部分物体的后续处理
 		if (obj->GetName().find("Bezier曲面") != std::string::npos) { // Beizer也不想改，因为要保存点，难。。。
 			auto bezierObj = bLight ? dynamic_cast<LightShape<BezierPatch>*>(obj) : dynamic_cast<BezierPatch*>(obj);
+			bezierObj->DeleteObjects();
 			bezierObj->ReadControlPoint(P3);
 			bezierObj->Accelerate();
 		}
