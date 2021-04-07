@@ -27,10 +27,13 @@
 #define ID_ConfirmAdd                   1021
 #define IDC_RotateAngle                 1023
 #define IDC_Rescuer                     1024
+#define IDC_CheckLight                  1025
+#define IDC_FilePath                    1027
 #define IDC_ColorR                      1028
 #define IDC_ColorG                      1029
 #define IDC_EDIT8                       1030
 #define IDC_ColorB                      1030
+#define IDC_btChooseTexture             1031
 #define ID_BUTTON2                      32771
 #define ID_FILE_SAVE_USER               32773
 
@@ -38,9 +41,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        331
+#define _APS_NEXT_RESOURCE_VALUE        334
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1032
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

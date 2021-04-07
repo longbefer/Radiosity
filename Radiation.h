@@ -13,6 +13,22 @@ class Radiation
 #if !USERADIATIONSMOOTH
 public:
 	~Radiation() {
+		DeleteMatrix();
+	}
+public:
+	void Init();
+	void Rendered(size_t n);
+	void Draw(CDC* pDC);
+
+private:
+	// 计算辐射度
+	void Calculate();
+
+	// 获取形状因子
+	double GetViewFactor(const Patch&, const Patch&);
+
+	// 删除矩阵
+	void DeleteMatrix() {
 		size_t n = patchs.size();
 #ifndef Southwell
 		if (factors) {
@@ -33,17 +49,6 @@ public:
 		}
 #endif
 	}
-public:
-	void Init();
-	void Rendered(size_t n);
-	void Draw(CDC* pDC);
-
-private:
-	// 计算辐射度
-	void Calculate();
-
-	// 获取形状因子
-	double GetViewFactor(const Patch&, const Patch&);
 
 public:
 	std::function<double(const Ray&)> hitObject;   // hit the object
@@ -64,10 +69,7 @@ public:
 public:
 #ifdef Southwell
 	~Radiation() {
-		if (increase) {
-			delete[] increase;
-			increase = nullptr;
-		}
+		DeleteMatrix();
 	}
 #endif
 	void Init();
@@ -80,6 +82,15 @@ private:
 
 	double GetViewFactor(const Patch&, const Patch&, const size_t&, const size_t&);
 
+#ifdef Southwell
+	void DeleteMatrix() {
+		if (increase) {
+			delete[] increase;
+			increase = nullptr;
+		}
+	}
+#endif
+
 public:
 	std::function<double(const Ray&)> hitObject;   // hit the object
 
@@ -88,7 +99,7 @@ public:
 	bool bFinish = false;
 #ifdef Southwell
 	Color* increase = nullptr;
-#endif
-#endif
+#endif // 使用逐步求精的算法实现
+#endif // 使用四角点来绘制
 };
 

@@ -6,6 +6,7 @@
 #include "CPaintPanel.h"
 extern volatile bool ENDDRAW;
 extern volatile bool ENDRENDER;
+extern volatile bool ENDPROGRAM;
 
 // CPaintPanel
 
@@ -16,6 +17,7 @@ CPaintPanel::CPaintPanel()
 	//s->Init();
 	bRender = false;
 	bDraw = true;
+	//drawMutex = CreateMutex(NULL, FALSE, TEXT("Draw"));
 }
 
 CPaintPanel::~CPaintPanel()
@@ -32,9 +34,14 @@ END_MESSAGE_MAP()
 
 DWORD __stdcall DoubleBuffer(void* pWind)
 {
+	CPaintPanel* pView = (CPaintPanel*)(pWind);
+
+	// 线程互斥锁
+	std::unique_lock<std::mutex> lk(pView->drawMutex);
+	pView->bDraw = false;
+	pView->cv.wait(lk, [] {return ENDDRAW && (!ENDPROGRAM); });
 	ENDDRAW = false;
 
-	CPaintPanel* pView = (CPaintPanel*)(pWind);
 	CRect rect;//客户区矩形
 	pView->GetClientRect(&rect);
 	CDC* pDC = pView->GetDC(); // 获取当前绘制板块
@@ -60,8 +67,12 @@ DWORD __stdcall DoubleBuffer(void* pWind)
 	memDC.SelectObject(pOldBitmap);//恢复位图
 	NewBitmap.DeleteObject();//删除位图
 	memDC.DeleteDC();//删除memDC
+
+	lk.unlock();
 	ENDDRAW = true;
-	return ::GetCurrentThreadId();
+	pView->cv.notify_one();
+	pView->bDraw = true;
+	return *(reinterpret_cast<DWORD*>(&std::this_thread::get_id()));
 }
 
 void CPaintPanel::OnDraw(CDC* pDC)
@@ -70,21 +81,16 @@ void CPaintPanel::OnDraw(CDC* pDC)
 	// TODO:  在此添加绘制代码
 
 	if (s && bRender) {
-		HANDLE hThread;
-		DWORD ThreadID;
-		// 使用其他线程来渲染
-		hThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)RenderThread, this, 0, &ThreadID);
-		CloseHandle(hThread);
+		std::thread renderThread(RenderThread, this);
+		renderThread.detach();
 		bRender = false;
 	}
-	if (s && ENDDRAW/*bDraw*/ /*&& (!s->bFinish)*/) { // 启用线程绘制，互斥使用
-		bDraw = false;
-		HANDLE hThread;
-		DWORD ThreadID;
-		hThread = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)DoubleBuffer, this, 0, &ThreadID);
-		CloseHandle(hThread);
-		bDraw = true;
+
+	if (s && bDraw) {
+		std::thread bufferThread(DoubleBuffer, this);
+		bufferThread.detach();
 	}
+
 	SetTimer(1, 1500, nullptr);
 }
 
@@ -96,8 +102,13 @@ void CPaintPanel::SetScene(Scene*s)
 
 void CPaintPanel::Init()
 {
-	while (!bDraw) {} // 阻塞线程，等绘制完成再初始化（否则会导致初始化删除patchs的内容，导致访问出现问题）
+	//drawMutex.lock();
+	std::unique_lock<std::mutex> lk(drawMutex);
+	cv.wait(lk, [] {return ENDDRAW; });
 	s->Init();
+	lk.unlock();
+	cv.notify_one();
+	//drawMutex.unlock();
 	bRender = true;
 }
 
@@ -138,7 +149,8 @@ DWORD __stdcall RenderThread(void*pWind)
 	if (pView->s) pView->s->Rendered();
 	else throw std::bad_alloc();
 	ENDRENDER = true;
-	return ::GetCurrentThreadId();
+	//return ::GetCurrentThreadId();
+	return *(reinterpret_cast<DWORD*>(&std::this_thread::get_id()));
 }
 
 

@@ -77,7 +77,7 @@ std::vector<Patch> Sphere::ObjectPatch()
 		for (int k = 0; k < 3; k++) {
 			P3 point3;
 			point3.position = P[SouthIndex[k]];
-			point3.normal = (point3.normal - center).Normalized();
+			point3.normal = (point3.position - center).Normalized();
 			//point3.texture;
 			patch.vertices.push_back(point3);
 		}
@@ -89,7 +89,7 @@ std::vector<Patch> Sphere::ObjectPatch()
 
 void Sphere::ReadVertex()
 {
-	P[0] = center + Point3d(0.0, r, 0.0);
+	P[0] = center + Point3d(0.0, r, 0.0, 0.0);
 	double gAlpha, gBeta;
 	for (int i = 0; i < N1 - 1; ++i) {
 		gAlpha = (i + 1.0) * PI / divide;
@@ -99,7 +99,8 @@ void Sphere::ReadVertex()
 			P[index].x = r * sin(gAlpha) * sin(gBeta) + center.x;
 			P[index].y = r * cos(gAlpha) + center.y;
 			P[index].z = r * sin(gAlpha) * cos(gBeta) + center.z;
+			P[index].w = 1.0;
 		}
 	}
-	P[static_cast<size_t>(((size_t)N1 - 1U) * (size_t)N2 + 1U)] = center - Point3d(0.0, r, 0.0);
+	P[static_cast<size_t>(((size_t)N1 - 1U) * (size_t)N2 + 1U)] = center - Point3d(0.0, r, 0.0, 0.0);
 }

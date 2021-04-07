@@ -13,7 +13,7 @@ void Radiation::Init()
 	// 初始化形状因子
 #ifdef Southwell
 	//factors = new double[n * (n + 1) / 2]{ 0 };
-	increase = new Color[n];
+	increase = new Color[n]{ Black };
 	// 初始化面片辐射度并设置增量为E
 	for (size_t i = 0; i < n; ++i) {
 		increase[i] = patchs[i].obj->GetEmmision();
@@ -32,6 +32,7 @@ void Radiation::Init()
 	// 初始化能量
 	for (auto& patch : patchs)
 		patch.excident = patch.obj->GetEmmision();
+	bFinish = false;
 #endif
 }
 
@@ -43,6 +44,7 @@ void Radiation::Rendered(size_t n)
 	for (size_t i = n; i > 0; --i)
 		Calculate();
 #endif
+	DeleteMatrix();
 }
 
 void Radiation::Draw(CDC* pDC)
@@ -174,7 +176,7 @@ void Radiation::Calculate()
 double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 {
 	if (&in == &out) return 0.0;
-#if 0 // 是否使用多点采样来绘制
+#if USERADIATIONSMOOTH // 是否使用多点采样来绘制
 	// 几何中心
 	Point3d outCenter = (out.vertices[0].position + out.vertices[1].position + out.vertices[2].position) / 3.0;
 	Point3d inCenter = (in.vertices[0].position + in.vertices[1].position + in.vertices[2].position) / 3.0;
@@ -207,7 +209,7 @@ double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 #ifdef Southwell
 	int samplerNumber = 16;   // 采样的数量
 #else 
-	int samplerNumber = 256;  // 采样点数量
+	int samplerNumber = 64;   // 采样点数量
 #endif
 	Sampler sampler[2];       // 两个面片分别采样
 	double avg_factor = 0.0;  // 获取平均的形状因子
@@ -242,6 +244,9 @@ double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 		else throw std::bad_function_call(); // need init hitObject function
 		if (std::fabs(t - tHit) > kEpsilon)
 			return 0.0;
+		//if (t < tHit - kEpsilon) return 0.0; 
+		// 注意：这句并非正确，但是却不可能存在没有击中该面片的可能，
+		// 故 当 t > tHit时，也表示击中该面片
 
 		double invLength = 1.0 / pointNormal.Length_Square();
 		avg_factor += cosij * cosji * inv_pi * invLength;
@@ -277,8 +282,11 @@ void Radiation::Rendered(size_t n)
 		Calculate();
 		// 作用全局用于结束整个程序而不至于报错，放到Calculate里怕影响
 		// 程序的并行计算。。。
-		if (ENDPROGRAM) return;
+		if (ENDPROGRAM) break;
 	}
+#ifdef Southwell
+	DeleteMatrix();
+#endif
 }
 
 void Radiation::Draw(CDC* pDC)
@@ -291,6 +299,8 @@ void Radiation::Draw(CDC* pDC)
 	paint.InitDeepBuffer(1000, 1000, 1000);
 
 	for (auto& patch : patchs) {
+	//for (size_t i = 0; i < patchs.size(); ++i) {
+	//	auto& patch = patchs[i];
 		if (patch.vertices.size() == 3) {
 			for (int loop = 0; loop < 3; ++loop) {
 				point3[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
@@ -418,6 +428,11 @@ double Radiation::GetViewFactor(const Patch& in, const Patch& out, const size_t&
 	Point3d outCenter = out.vertices[op].position;
 	Point3d inCenter = in.vertices[ip].position;
 
+	//if (in.vertices[ip].normal.w != 0.0 || out.vertices[op].normal.w != 0.0) {
+	//	outCenter = ZERO;
+	//	inCenter = ZERO;
+	//}
+
 	const Vector3d pointNormal = outCenter - inCenter;
 	Vector3d vectorij = pointNormal.Normalized();
 	double cosij = Dot(in.vertices[ip].normal.Normalized(), vectorij);
@@ -438,6 +453,7 @@ double Radiation::GetViewFactor(const Patch& in, const Patch& out, const size_t&
 	else throw std::bad_function_call(); // need init hitObject function
 	if (std::fabs(t - tHit) > kEpsilon)
 		return 0.0;
+	//if (t < tHit - kEpsilon) return 0.0;
 
 	double invLength = 1.0 / pointNormal.Length_Square();
 

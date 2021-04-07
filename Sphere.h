@@ -17,11 +17,11 @@ public:
     virtual void SetTransformMatrix(const Matrix& matrix) {
         GameObject::SetTransformMatrix(matrix);
         center = this->transformMatrix * center;
-        //this->r = transformMatrix.m[0][0] * r; // 只对设置Scale缩放x有效
+        this->r = transformMatrix.m[0][0] * r; // 只对设置Scale缩放x有效
         //ReadVertex();
     }
     virtual const BBox GetBoundingBox() {
-        this->box = BBox(center - Point3d(r, r, r), center + Point3d(r, r, r));
+        this->box = BBox(center - Point3d(r, r, r, 1.0), center + Point3d(r, r, r, 0.0));
         return this->box;
     }
 

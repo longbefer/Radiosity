@@ -38,7 +38,7 @@ public:
 		double u_max = std::max({ vertices[0].texture.u, vertices[1].texture.u, vertices[2].texture.u, vertices[3].texture.u });
 		double v_min = std::min({ vertices[0].texture.v, vertices[1].texture.v, vertices[2].texture.v, vertices[3].texture.v });
 		double v_max = std::max({ vertices[0].texture.v, vertices[1].texture.v, vertices[2].texture.v, vertices[3].texture.v });
-		Color ref = Black; double count = 0;
+		Color ref = Black; double count = 0.0;
 		for (double i = u_min; i <= u_max; i += 0.01)
 			for (double j = v_min; j <= v_max; j += 0.01) {
 				ref += obj->GetTextureImagePixel(Texture(i, j));

@@ -195,6 +195,7 @@
     <None Include="res\Test.rc2">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\TestDoc.ico">
@@ -210,9 +211,6 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\2.bmp">
-      <Filter>资源文件</Filter>
-    </Image>
-    <Image Include="res\bitmap3.bmp">
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\3.bmp">

@@ -42,6 +42,7 @@ public:
 	afx_msg void OnBnClickedAddobject();
 	afx_msg void OnBnClickedConfirm();
 //	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnNMDblclkObjectlist(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 

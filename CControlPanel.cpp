@@ -8,6 +8,7 @@
 #include "MainFrm.h"
 
 extern volatile bool ENDDRAW;
+extern volatile bool ENDPROGRAM;
 
 // CControlPanel
 
@@ -72,6 +73,7 @@ BEGIN_MESSAGE_MAP(CControlPanel, CFormView)
 	ON_BN_CLICKED(IDC_AddObject, &CControlPanel::OnBnClickedAddobject)
 	ON_BN_CLICKED(IDC_Confirm, &CControlPanel::OnBnClickedConfirm)
 //	ON_WM_SIZE()
+ON_NOTIFY(NM_DBLCLK, IDC_ObjectList, &CControlPanel::OnNMDblclkObjectlist)
 END_MESSAGE_MAP()
 
 
@@ -108,7 +110,6 @@ void CControlPanel::OnBnClickedDeleteobject()
 		MessageBox(TEXT("当前渲染还未结束，请耐心等该渲染完成后删除物体。"), TEXT("警告"));
 		return;
 	}
-	while (!ENDDRAW) {} // 没有结束绘制则等待
 	// 删除选中的物体
 	POSITION fstSelect = lstObject.GetFirstSelectedItemPosition();
 	int location = static_cast<int>(reinterpret_cast<size_t>(fstSelect)) - 1;
@@ -117,11 +118,14 @@ void CControlPanel::OnBnClickedDeleteobject()
 	auto& objList = scene.GetObjects();
 	// 获取当前Object并删除它
 	auto& delObj = objList[location];
+	ENDPROGRAM = true;
+	while (!ENDDRAW) {} // 没有结束绘制则等待
 	delete delObj; delObj = nullptr;
 	// 从objList中删除当前对象
-	objList.erase(objList.begin() + location, objList.begin() + location + 1);
+	objList.erase(objList.begin() + location);
 	// 更新list列表
 	UpdateListCtrl();
+	ENDPROGRAM = false;
 
 	//do { // 多选删除无效，不清楚原因
 		//lstObject.DeleteItem((int)fstSelect - 1);
@@ -139,6 +143,7 @@ void CControlPanel::OnBnClickedAddobject()
 	}
 	CAddObjectDlg dlg;
 	dlg.SetScene(&scene);
+	dlg.SetType(CAddObjectDlg::Operator::Add);
 	dlg.DoModal();
 	UpdateListCtrl();
 }
@@ -162,3 +167,35 @@ void CControlPanel::OnBnClickedConfirm()
 //	// TODO: 在此处添加消息处理程序代码
 //	//lstObject.Wid
 //}
+
+
+void CControlPanel::OnNMDblclkObjectlist(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
+	int m_Row = pNMListView->iItem;
+
+	if (pNMListView->iItem == -1) {
+		return;
+	}
+
+	if (!scene.bFinish) {
+		MessageBox(TEXT("当前渲染还未结束，请耐心等该渲染完成后修改物体。"), TEXT("警告"));
+		return;
+	}
+	//CString pos;
+	//pos.Format(TEXT("选中的位置为： %d"), m_Row);
+	//MessageBox(pos);
+
+	CAddObjectDlg dlg;
+	dlg.SetScene(&scene);
+	dlg.SetType(CAddObjectDlg::Operator::Modify);
+	dlg.SetObjectIndex(m_Row);
+	dlg.DoModal();
+
+	UpdateListCtrl();
+	//UpdateData();
+
+	*pResult = 0;
+}

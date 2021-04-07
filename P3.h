@@ -7,9 +7,19 @@
 #include <future> /* 异步 */
 #include <array> /* 存储 */
 #include <vector> /* 存储 */
+#include <tuple> /* 存储 */
 #include <memory> /* 智能指针 */
 #include <string> /* 字符操作 */
 #include <cassert> /* 断言 */
+#include <thread> /* 线程 */
+#include <condition_variable> /* 条件锁 */
+#include <mutex> /* 互斥锁 */
+#include <fstream> /* 读文件 */
+#include <Windows.h>
+#include <gdiplus.h> /* 读图片 */
+#include <gdiplusbitmap.h> /* 图片信息 */
+
+#pragma comment(lib, "gdiplus.lib")
 
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -437,9 +447,10 @@ public:
 
 	// 矩阵运算
 	friend Vec3<T> operator*(const Matrix& mat, const Vec3<T>& p) {
-		return(Vec3<T>(mat.m[0][0] * p.x + mat.m[0][1] * p.y + mat.m[0][2] * p.z + mat.m[0][3]
-			, mat.m[1][0] * p.x + mat.m[1][1] * p.y + mat.m[1][2] * p.z + mat.m[1][3]
-			, mat.m[2][0] * p.x + mat.m[2][1] * p.y + mat.m[2][2] * p.z + mat.m[2][3]));
+		return(Vec3<T>(mat.m[0][0] * p.x + mat.m[0][1] * p.y + mat.m[0][2] * p.z + mat.m[0][3] * p.w
+			, mat.m[1][0] * p.x + mat.m[1][1] * p.y + mat.m[1][2] * p.z + mat.m[1][3] * p.w
+			, mat.m[2][0] * p.x + mat.m[2][1] * p.y + mat.m[2][2] * p.z + mat.m[2][3] * p.w
+			, mat.m[3][0] * p.x + mat.m[3][1] * p.y + mat.m[3][2] * p.z + mat.m[3][3] * p.w));
 	}
 public:
 	T z;
@@ -461,7 +472,7 @@ inline auto Cross(const Vec3<T1>& lhs, const Vec3<T2>& rhs)
 		static_cast<T3>(lhs.z) * static_cast<T3>(rhs.x) -
 		static_cast<T3>(lhs.x) * static_cast<T3>(rhs.z),
 		static_cast<T3>(lhs.x) * static_cast<T3>(rhs.y) -
-		static_cast<T3>(lhs.y) * static_cast<T3>(rhs.x));
+		static_cast<T3>(lhs.y) * static_cast<T3>(rhs.x), 0.0); // 叉乘结果为向量
 	return sum;
 }
 
@@ -560,6 +571,15 @@ public:
 		this->g /= ratio;
 		this->b /= ratio;
 		this->alpha /= ratio;
+	}
+
+	void operator/=(const Color& c) {
+		if (c.r == 0.0 || c.g == 0.0 || c.b == 0.0 || c.alpha == 0.0)
+			throw std::bad_exception();
+		this->r /= c.r;
+		this->g /= c.g;
+		this->b /= c.b;
+		this->alpha /= c.alpha;
 	}
 
 	bool operator<(const Color& c) {
@@ -714,13 +734,128 @@ public:
 		CBitmap NewBitmap;
 		NewBitmap.LoadBitmapW(nIDResource);
 		NewBitmap.GetBitmap(&bmp);
+		VTURN = true; this->bitCount = 4U;
 		int nbytesize = bmp.bmWidthBytes * bmp.bmHeight;
 		image = std::make_unique<BYTE[]>(nbytesize);
 		NewBitmap.GetBitmapBits(nbytesize, (LPVOID)image.get());
 	}
+
+	bool ReadImage(const std::string& path) {
+		std::string fileType = path.substr(path.size() - 5UL);
+		if (fileType.find(".jpg") != std::string::npos ||
+			fileType.find(".jpeg") != std::string::npos) // jpg图片
+			return ReadJPEGFile(path);
+		else if (fileType.find(".bmp") != std::string::npos) // bmp图片
+			return ReadBMPFile(path);
+		else {
+			::AfxMessageBox(TEXT("只兼容*.jpg或*.bmp格式图片"));
+			return false; // 不兼容的格式
+		}
+		return true;
+	}
+
+	Color GetImagePixel(const Texture& t) {
+		if (image == nullptr) return Black;
+		/*检测图片的边界，防止越界*/
+		size_t u = static_cast<size_t>(t.u * bmp.bmWidth), v = static_cast<size_t>(t.v * bmp.bmHeight);
+		if (u < 0ULL) u = 0ULL; if (v < 0ULL) v = 0ULL;
+		if (u > bmp.bmWidth - 1ULL) 	u = bmp.bmWidth - 1ULL;
+		if (v > bmp.bmHeight - 1ULL)	v = bmp.bmHeight - 1ULL;
+		/*查找对应纹理空间的颜色值*/
+		if (VTURN) v = bmp.bmHeight - 1ULL - v;
+		size_t position = v * bmp.bmWidthBytes + bitCount * u;//颜色分量位置
+		return  CRGB(image[position + 2ULL] / 255.0, image[position + 1ULL] / 255.0, image[position] / 255.0);//获取颜色值
+	}
+
+protected:
+#pragma warning(push)
+#pragma warning(disable:4996)
+	bool ReadBMPFile(const std::string& path) {
+		// reference: https://blog.csdn.net/littlefishvc/article/details/45313295
+		FILE* fp = NULL;
+		if (!(fp = fopen(path.c_str(), "rb"))) {
+			::AfxMessageBox(_T("打开图片失败！"));
+			return false;
+		}
+
+		BITMAPFILEHEADER fileheader = { 0 };
+		fread(&fileheader, sizeof(fileheader), 1ULL, fp); // 读取文件的一串数据，获取bmp格式的文件头
+
+		// 若图片格式非bmp格式，则返回
+		if (fileheader.bfType != 0x4D42) {
+			::AfxMessageBox(_T("图片非bmp格式！"));
+			fclose(fp);
+			return false;
+		}
+
+		// 以下读取图片信息（宽高）
+		BITMAPINFOHEADER head;
+		fread(&head, sizeof(BITMAPINFOHEADER), 1ULL, fp);
+		bmp.bmWidth = head.biWidth;
+		bmp.bmHeight = head.biHeight;
+		bmp.bmWidthBytes = (head.biWidth * head.biBitCount + 31) / 32 * 4;
+		WORD biBitCount = head.biBitCount;
+
+		if (biBitCount != 24U)
+		{
+			::AfxMessageBox(_T("请选择24位位图！"));
+			fclose(fp);
+			return false;
+		}
+		this->bitCount = 3U;   // 设置字节数，用于设置是否为32位位图还是24位位图
+		VTURN = false; 
+		int totalSize = head.biSizeImage;
+
+		// 读取bmp图片，赋值给image
+		image = std::make_unique<BYTE[]>(totalSize);
+		size_t size = 0;
+		size_t iret = 0ULL;
+		do {
+			iret = fread(&image[size], 1ULL, 1ULL, fp);
+			size = size + iret;
+		} while (iret != 0ULL);
+		fclose(fp);
+		return true;
+	}
+
+	bool ReadJPEGFile(const std::string& path) {
+		// reference: https://blog.csdn.net/weixin_30527143/article/details/101182276
+
+		Gdiplus::GdiplusStartupInput gdiplusstartupinput;
+		ULONG_PTR gdiplustoken;
+		GdiplusStartup(&gdiplustoken, &gdiplusstartupinput, NULL);
+
+		Gdiplus::Bitmap* bm = new Gdiplus::Bitmap(CString(path.c_str()));
+		bitCount = 4U; VTURN = true;
+		bmp.bmWidth = bm->GetWidth();
+		bmp.bmHeight = bm->GetHeight();
+		bmp.bmWidthBytes = bmp.bmWidth * bitCount;
+		image = std::make_unique<BYTE[]>(static_cast<size_t>(bmp.bmHeight) * bmp.bmWidthBytes);
+
+		Gdiplus::Color color;
+
+		for (long y = 0L; y < bmp.bmHeight; ++y)
+			for (long x = 0L; x < bmp.bmWidth; ++x) {
+				bm->GetPixel(x, y, &color);
+				size_t index = static_cast<size_t>(y) * bmp.bmWidthBytes + static_cast<size_t>(x) * bitCount;
+				image[index] = color.GetBlue();
+				image[index + 1ULL] = color.GetGreen();
+				image[index + 2ULL] = color.GetRed();
+				image[index + 3ULL] = color.GetAlpha();
+			}
+
+		delete bm;
+		Gdiplus::GdiplusShutdown(gdiplustoken);
+		return true;
+	}
+#pragma warning(pop)
 public:
 	std::unique_ptr<BYTE[]> image{ 0 };   // 图片内容，以颜色保存
 	BITMAP bmp{ 0 };                      // 保存图片信息，宽高
+	WORD bitCount = 4;                    // 字节数目
+
+private:
+	bool VTURN = false;                  // 是否将v翻转
 };
 
 

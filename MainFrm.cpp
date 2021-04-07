@@ -142,8 +142,8 @@ void CMainFrame::OnClose()
 	pPaintView->KillTimer(1);
 	CControlPanel* pControlView = (CControlPanel*)m_spliterWnd.GetPane(0, 0);
 	ENDPROGRAM = true; // 在此结束程序
-	while (!ENDDRAW) {} // 没有结束绘制则等待
 	while (!ENDRENDER) {} // 没有结束渲染则等待（这个可能要等一段时间了）
+	while (!ENDDRAW) {} // 没有结束绘制则等待
 	//while(!pControlView->scene.bFinish) {}
 	//while (!pPaintView->bDraw) {};
 	//pPaintView->OnClose();

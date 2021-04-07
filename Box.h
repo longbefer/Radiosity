@@ -19,8 +19,13 @@ public:
 	virtual void SetTransformMatrix(const Matrix& matrix) {
 		GameObject::SetTransformMatrix(matrix);
 		// 对物体进行变换（由于击中的限制，不可以旋转点来实现这个,但是缩放就会有问题。。。）
+		//for (size_t i = 0; i < sizeof(point) / sizeof(Point3d); ++i)
+		//	point[i] = matrix * point[i]; // 这里只能应用缩放和移动矩阵
+	}
+
+	void SetMoveMatrix(const Matrix& matrix) {
 		for (size_t i = 0; i < sizeof(point) / sizeof(Point3d); ++i)
-			point[i] = matrix * point[i]; // 这里只能应用缩放和移动矩阵
+			point[i] = matrix * point[i];
 	}
 
 	virtual const BBox GetBoundingBox() {

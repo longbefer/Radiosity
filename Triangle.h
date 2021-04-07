@@ -29,6 +29,12 @@ public:
 			this->normal[i] = fNormal;
 		this->name = "Èý½ÇÐÎ";
 	}
+	Triangle(const Point3d& a, const Point3d& b, const Point3d& c, const Normal& n1, const Normal& n2, const Normal& n3) {
+		Triangle(a, b, c);
+		normal[0] = n1;
+		normal[1] = n2;
+		normal[2] = n3;
+	}
 public:
 	virtual bool IsHit(const Ray&, double&) const;
 	virtual std::vector<Patch> ObjectPatch();

@@ -105,28 +105,28 @@ void BezierPatch::Tessellation(Texture* mesh, Point3d* P, Vector3d* N)
 			+ (u3 * P3[0][3] + u2 * P3[1][3] + u1 * P3[2][3] + u0 * P3[3][3]) * dv0;
 		N[i] = Cross(uTagent, vTagent);
 		N[i].Normalize();//规范化顶点法向量
-		Vector3d Pu = Vector3d(uTagent), Pv = Vector3d(vTagent);
+		Vector3d Pu = Vector3d(uTagent.x, uTagent.y, uTagent.z, 0.0), Pv = Vector3d(vTagent.x, vTagent.y, vTagent.z, 0.0);
 		if (Pv.Distance() < 1e-4)
 		{
-			N[i] = Vector3d(P[i]);
+			N[i] = Vector3d(P[i].x, P[i].y, P[i].z, 0.0);
 			N[i].Normalize();
 		}//南北极点的V向偏导数为零
 
 		if (Pu.Distance() < 1e-4)
 		{
-			N[i] = Vector3d(P[i]);
+			N[i] = Vector3d(P[i].x , P[i].y, P[i].z, 0.0);
 			N[i].Normalize();
 		}//南北极点的U向偏导数为零
 	}
 
-	Triangle* triangle_ptr1 = new Triangle(P[0], P[1], P[2]);
+	SmoothTriangle* triangle_ptr1 = new SmoothTriangle(P[0], P[1], P[2]);
 	triangle_ptr1->SetNormal(N[0], N[1], N[2]);
 	triangle_ptr1->SetRecursionTimes(0);
 	triangle_ptr1->SetColor(reflectance);
 	triangle_ptr1->SetEmmision(emmision);
 	objects.push_back(triangle_ptr1);
 
-	Triangle* triangle_ptr2 = new Triangle(P[0], P[2], P[3]);
+	SmoothTriangle* triangle_ptr2 = new SmoothTriangle(P[0], P[2], P[3]);
 	triangle_ptr2->SetNormal(N[0], N[2], N[3]);
 	triangle_ptr2->SetRecursionTimes(0);
 	triangle_ptr2->SetColor(reflectance);

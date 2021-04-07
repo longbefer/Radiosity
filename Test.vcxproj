@@ -169,11 +169,13 @@
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -250,13 +252,13 @@
     <ResourceCompile Include="Test.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="res\Test.rc2" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\1.bmp" />
     <Image Include="res\2.bmp" />
     <Image Include="res\3.bmp" />
-    <Image Include="res\bitmap3.bmp" />
     <Image Include="res\Test.ico" />
     <Image Include="res\TestDoc.ico" />
     <Image Include="res\Toolbar.bmp" />

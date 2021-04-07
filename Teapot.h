@@ -52,7 +52,9 @@ private:
 	void DrawSpout(void);//壶嘴
 	void DrawLid(void);//壶盖
 	void DrawBottom(void);//壶底
-	void SigleCurvedPatch(void);//绘制一个双三次曲面片
+	void SigleCurvedPatch(void) {//绘制一个双三次曲面片
+		bezier.ReadControlPoint(Ver3);//16个控制点
+	};
 public:
 
 	Point3d Ver[306];//茶壶总控制点

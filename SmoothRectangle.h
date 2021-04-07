@@ -9,7 +9,12 @@ class SmoothRectangle :
     public User::Rectangle
 {
 public:
-    using Rectangle::Rectangle;
+    //using Rectangle::Rectangle;
+    SmoothRectangle(const Point3d& point, const Vector3d& a, const Vector3d& b, const Normal& n) :User::Rectangle(point, a, b, n) {
+        for (size_t i = 0; i < sizeof(pointNormal) / sizeof(Normal); ++i)
+            pointNormal[0] = n;
+    }
+
     void SetTexture(const Texture& t1 = BL, const Texture& t2 = BR, const Texture& t3 = TR, const Texture&t4 = TL) {
         texture[0] = t1; texture[1] = t2; texture[2] = t3; texture[3] = t4;
     }
@@ -18,11 +23,28 @@ public:
         P3 point4[4];
         for (size_t i = 0; i < sizeof(point) / sizeof(Point3d); ++i) {
             point4[i].position = point[i];
-            point4[i].normal = normal;
+            point4[i].normal = pointNormal[i];
             point4[i].texture = texture[i];
         }
         SmoothDividenPatch(patchs, point4, divide);
         return patchs;
+    }
+
+    virtual void SetTransformMatrix(const Matrix& matrix) {
+        GameObject::SetTransformMatrix(matrix);
+        for (size_t i = 0; i < sizeof(point) / sizeof(Point3d); ++i) {
+            point[i] = transformMatrix * point[i];
+            pointNormal[i] = (transformMatrix * pointNormal[i]).Normalized();
+        }
+        this->normal = (transformMatrix * normal).Normalized();
+    }
+
+    void SetNormal(const Normal& n1, const Normal& n2, const Normal& n3, const Normal& n4) {
+        pointNormal[0] = n1;
+        pointNormal[1] = n2;
+        pointNormal[2] = n3;
+        pointNormal[3] = n4;
+        normal = (n1 + n2 + n3 + n4) / 4.0;
     }
 
 private:
@@ -34,7 +56,7 @@ private:
             for (int i = 0; i < 4; ++i) {
                 P3 patchP;
                 patchP.position = point4[i].position;
-                patchP.normal = normal;
+                patchP.normal = point4[i].normal;
                 patchP.texture = point4[i].texture;
                 patch.vertices.push_back(patchP);
             }
@@ -91,5 +113,6 @@ private:
 
 protected:
     Texture texture[4];
+    Normal pointNormal[4];
 };
 

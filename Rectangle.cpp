@@ -39,6 +39,7 @@ namespace User {
         if (t <= 0) {
             Patch patch;
             patch.obj = this;
+            normal.Normalize();
             patch.normal = normal;
             for (int i = 0; i < 4; ++i) {
                 CP3 patchP;

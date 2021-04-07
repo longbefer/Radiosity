@@ -65,7 +65,7 @@ public:
                     o.Vertices[o.Indices[i]].Position.Z);
                 n3[i % 3ULL] = Normal(o.Vertices[o.Indices[i]].Normal.X,
                     o.Vertices[o.Indices[i]].Normal.Y,
-                    o.Vertices[o.Indices[i]].Normal.Z);
+                    o.Vertices[o.Indices[i]].Normal.Z, 0.0);
                 t3[i % 3ULL] = Texture(o.Vertices[o.Indices[i]].TextureCoordinate.X,
                     o.Vertices[o.Indices[i]].TextureCoordinate.Y);
 

@@ -27,6 +27,8 @@ protected:
 public:
 	Scene* s = nullptr;
 	bool bDraw = true;
+	std::mutex drawMutex;
+	std::condition_variable cv;
 	bool bRender = false;
 protected:
 	DECLARE_MESSAGE_MAP()

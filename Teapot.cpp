@@ -213,8 +213,3 @@ void Teapot::DrawLid()//绘制壶盖
 		SigleCurvedPatch();//双三次Bezier曲面
 	}
 }
-
-void Teapot::SigleCurvedPatch()//绘制每个曲面片
-{
-	bezier.ReadControlPoint(Ver3);//16个控制点
-}

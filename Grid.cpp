@@ -136,8 +136,8 @@ bool Grid::IsHit(const Ray&ray, double&tmin) const
 	Point3d p = ray.o + t0 * ray.d;
 	if (box.Inside(ray.o)) p = ray.o;
 	ix = Clamp((p.x - x0) * nx / (x1 - x0), 0, nx - 1);
-	iy = Clamp((p.y - y0) * nx / (y1 - y0), 0, ny - 1);
-	iz = Clamp((p.z - z0) * nx / (z1 - z0), 0, nz - 1);
+	iy = Clamp((p.y - y0) * ny / (y1 - y0), 0, ny - 1);
+	iz = Clamp((p.z - z0) * nz / (z1 - z0), 0, nz - 1);
 
 	// 以下设置击中层次包围盒内部增量
 	double dtx = (tx_max - tx_min) / nx;
@@ -146,16 +146,16 @@ bool Grid::IsHit(const Ray&ray, double&tmin) const
 
 	double tx_next = tx_min + (ix + 1) * dtx;
 	int ix_step = 1, ix_stop = nx;
-	if (dx <= 0) {
-		tx_next = ((dx == 0) ? 1.0E10 : (tx_min + (nx - ix) * dtx));
+	if (dx <= 0.0) {
+		tx_next = ((dx == 0.0) ? 1.0E10 : (tx_min + (nx - ix) * dtx));
 		ix_step = -1;
 		ix_stop = -1;
 	}
 
 	double ty_next = ty_min + (iy + 1) * dty;
 	int iy_step = 1, iy_stop = ny;
-	if (dy <= 0) {
-		ty_next = ((dy == 0) ? 1.0E10 : (ty_min + (ny - iy) * dty));
+	if (dy <= 0.0) {
+		ty_next = ((dy == 0.0) ? 1.0E10 : (ty_min + (ny - iy) * dty));
 		iy_step = -1;
 		iy_stop = -1;
 	}
@@ -170,7 +170,7 @@ bool Grid::IsHit(const Ray&ray, double&tmin) const
 
 	//遍历网格
 	while (true) {
-		GameObject* object_ptr = cells[ix + nx * iy + nx * ny * iz];
+		GameObject* object_ptr = cells[static_cast<size_t>(ix + nx * iy + nx * ny * iz)];
 
 		if (tx_next < ty_next && tx_next < tz_next) {
 			if (object_ptr && object_ptr->IsHit(ray, tmin) && tmin < tx_next)

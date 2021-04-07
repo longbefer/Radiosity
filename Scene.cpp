@@ -66,38 +66,42 @@ double Scene::HitObject(const Ray& ray) const
 
 void Scene::Build()
 {
-	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 295, 100));
-	light->SetColor(White);
 #ifdef Southwell
-	light->SetEmmision(5 * White);
-#else
-	light->SetEmmision(White);
+#if USERADIATIONSMOOTH
+	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 300, 100));
+#else 
+	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 295, 100));
 #endif
+#else 
+	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 295, 100));
+#endif
+	light->SetColor(White);
+	light->SetEmmision(White);
 	light->SetRecursionTimes(3);
 
 	Color gray(0.6, 0.6, 0.6, 1.0);
 	// 左边
-	User::Rectangle* box = new User::Rectangle(Point3d(-300, -300, -300), Vector3d(0, 600, 0), Vector3d(0, 0, 600), Normal(1, 0, 0, 0));
+	User::Rectangle* box = new User::Rectangle(Point3d(-300, -300, -300), Vector3d(0, 600, 0, 0.0), Vector3d(0, 0, 600, 0.0), Normal(1, 0, 0, 0));
 	box->SetColor(Red);
 	box->SetEmmision(Black);
 	box->SetRecursionTimes(5);
 	// 下面
-	User::Rectangle* box1 = new User::Rectangle(Point3d(-300, -300, -300), Vector3d(600, 0, 0), Vector3d(0, 0, 600), Normal(0, 1, 0, 0));
+	User::Rectangle* box1 = new User::Rectangle(Point3d(-300, -300, -300), Vector3d(600, 0, 0, 0.0), Vector3d(0, 0, 600, 0.0), Normal(0, 1, 0, 0));
 	box1->SetColor(gray);
 	box1->SetEmmision(Black);
 	box1->SetRecursionTimes(5);
 	// 后面
-	User::Rectangle* box2 = new User::Rectangle(Point3d(-300, -300, -300), Vector3d(0, 600, 0), Vector3d(600, 0, 0), Normal(0, 0, 1, 0));
+	User::Rectangle* box2 = new User::Rectangle(Point3d(-300, -300, -300), Vector3d(0, 600, 0, 0.0), Vector3d(600, 0, 0, 0.0), Normal(0, 0, 1, 0));
 	box2->SetColor(gray);
 	box2->SetEmmision(Black);
 	box2->SetRecursionTimes(5);
 	// 上面
-	User::Rectangle* box3 = new User::Rectangle(Point3d(300, 300, 300), Vector3d(-600, 0, 0), Vector3d(0, 0, -600), Normal(0, -1, 0, 0));
+	User::Rectangle* box3 = new User::Rectangle(Point3d(300, 300, 300), Vector3d(-600, 0, 0, 0.0), Vector3d(0, 0, -600, 0.0), Normal(0, -1, 0, 0));
 	box3->SetColor(gray);
 	box3->SetEmmision(Black);
 	box3->SetRecursionTimes(5);
 	// 右面
-	User::Rectangle* box4 = new User::Rectangle(Point3d(300, 300, 300), Vector3d(0, -600, 0), Vector3d(0, 0, -600), Normal(-1, 0, 0, 0));
+	User::Rectangle* box4 = new User::Rectangle(Point3d(300, 300, 300), Vector3d(0, -600, 0, 0.0), Vector3d(0, 0, -600, 0.0), Normal(-1, 0, 0, 0));
 	box4->SetColor(Green);
 	box4->SetEmmision(Black);
 	box4->SetRecursionTimes(5);
@@ -113,17 +117,17 @@ void Scene::Build()
 	//box5->SetEmmision(Black);
 	//box5->SetRecursionTimes(2);
 	// --------------------------------------------------------------------------
-	//User::Rectangle* box5 = new User::Rectangle(Point3d(-200, -200, -200), Vector3d(400, 0, 0), Vector3d(0, 0, 400), Normal(0, 1, 0, 0));
+	//User::Rectangle* box5 = new User::Rectangle(Point3d(-200, -200, -200), Vector3d(400, 0, 0, 0, 0.0), Vector3d(0, 0, 400, 0, 0.0), Normal(0, 1, 0, 0));
 	//box5->SetColor(Color(1.0, 0.0, 1.0));
 	//box5->SetEmmision(Black);
 	//box5->SetRecursionTimes(5);
 	// --------------------------------------------------------------------------
-	//Sphere* box5 = new Sphere(Point3d(0, -100, 0), 200);
-	//box5->SetColor(gray);
-	//box5->SetEmmision(Black);
-	//box5->SetRecursionTimes(4);
+	Sphere* box5 = new Sphere(Point3d(0, -200, 0), 100);
+	box5->SetColor(gray);
+	box5->SetEmmision(Black);
+	box5->SetRecursionTimes(4);
 	// 将box旋转（注意其使用应该是先使用含Set的变换之后不允许使用含Set的变换了）
-	//Matrix rotateMatrix = rotateMatrix.SetRotate(30, Matrix::AXIS::Y).Scale(100.0, 100.0, 100.0).Translate(0, -250, 50);
+	//Matrix rotateMatrix = rotateMatrix.SetRotate(0, Matrix::AXIS::Y).Scale(1.0, 1.0, 1.0).Translate(0, -50, 0);
 	//box5->SetTransformMatrix(rotateMatrix);
 	// --------------------------------------------------------------------------
 	//SmoothTriangle* box5 = new SmoothTriangle(Point3d(-200, -200, -200), Point3d(200, -200, -200), Point3d(-200, -200, 200));
@@ -132,12 +136,16 @@ void Scene::Build()
 	//box5->SetEmmision(Black);
 	//box5->SetRecursionTimes(3);
 	// -------------------------------------------------------------------------------
-	SmoothRectangle* box5 = new SmoothRectangle(Point3d(-200, -200, -290), Vector3d(400, 0, 0), Vector3d(0, 400, 0), Normal(0, 0, 1, 0));
-	box5->SetColor(Black);
-	box5->SetEmmision(Black);
-	box5->SetRecursionTimes(4);
-	box5->SetTexture();
-	box5->SetTextureImage(IDB_BITMAP3);
+	//SmoothRectangle* box5 = new SmoothRectangle(Point3d(-200, -200, -290), Vector3d(400, 0, 0, 0.0), Vector3d(0, 400, 0, 0.0), Normal(0, 0, 1, 0.0));
+	//box5->SetNormal(ZNormal, ZNormal, ZNormal, ZNormal);
+	//box5->SetColor(White);
+	//box5->SetEmmision(Black);
+	//box5->SetRecursionTimes(4);
+	//box5->SetTexture();
+	//box5->SetTextureImage(IDB_BITMAP3);
+	//box5->SetTransformMatrix(rotateMatrix);
+	//box5->SetTextureImage("res\\3.bmp");
+	//box5->SetTextureImage("D:\\User\\Picture\\Saved Pictures\\Temp\\888.jpg");
 
 	// 茶壶
 	//Teapot* t = new Teapot();

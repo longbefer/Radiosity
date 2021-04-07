@@ -11,15 +11,7 @@ class Grid :
 public:
     Grid() :nx(0), ny(0), nz(0) {}
     virtual ~Grid() {
-        for (size_t i = 0; i < cells.size(); ++i) {
-            // 先清除组合体对象，在删除Compound内的对象
-            auto obj = dynamic_cast<Compound*>(cells[i]);
-            if (obj) {
-                delete obj;
-                obj = nullptr;
-            }
-        }
-        cells.erase(cells.begin(), cells.end());
+        ResetCells();
         this->DeleteObjects();
     }
 
@@ -38,7 +30,16 @@ public:
 protected:
     void SetupCells();
     void ResetCells() {
-        cells.clear();
+        for (size_t i = 0; i < cells.size(); ++i) {
+            // 先清除组合体对象，在删除Compound内的对象
+            auto obj = dynamic_cast<Compound*>(cells[i]);
+            if (obj) {
+                delete obj;
+                obj = nullptr;
+            }
+        }
+        cells.erase(cells.begin(), cells.end());
+        //cells.clear();
     }
 
 private:

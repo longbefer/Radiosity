@@ -35,7 +35,7 @@ namespace User {
             GameObject::SetTransformMatrix(matrix);
             for (size_t i = 0; i < sizeof(point) / sizeof(Point3d); ++i)
                 point[i] = transformMatrix * point[i];
-            this->normal = transformMatrix * normal;
+            this->normal = (transformMatrix * normal).Normalized();
         }
 
         virtual const BBox GetBoundingBox() {

@@ -3,6 +3,7 @@
 
 // CAddObjectDlg 对话框
 #include "Scene.h"
+#include "Light.h"
 
 class CAddObjectDlg : public CDialogEx
 {
@@ -14,6 +15,21 @@ public:
 
 	void SetScene(Scene*s) {
 		this->s = s;
+	}
+
+	enum class Operator { Add, Modify };
+
+	void SetType(Operator op) {
+		this->op = op;
+	}
+
+	void SetObjectIndex(size_t index) {
+		if (op != Operator::Modify) {
+			MessageBox(TEXT("设置ObjectIndex将会自动转为修改模式，若非修改，请检查代码"));
+			SetType(Operator::Modify);
+		}
+		this->modifyIndex = index;
+
 	}
 
 // 对话框数据
@@ -49,4 +65,15 @@ public:
 	afx_msg void OnBnClickedCheckz();
 	afx_msg void OnDropFiles(HDROP hDropInfo);
 	afx_msg void OnCbnDropdownSelectobject();
+	// 设置选中的对象是否为灯光
+	BOOL bLight;
+	afx_msg void OnBnClickedbtchoosetexture();
+	// 纹理图片的路径
+	CString fileName;
+	// bLight失效，使用控件访问
+	CButton LightCheckButton;
+	virtual BOOL OnInitDialog();
+
+	Operator op = Operator::Add;
+	size_t modifyIndex = 0ULL;
 };
