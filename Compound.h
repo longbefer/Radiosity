@@ -73,6 +73,7 @@ public:
 				objects[i] = nullptr;
 			}
 		}
+		objects.erase(objects.begin(), objects.end());
 	}
 
 protected:

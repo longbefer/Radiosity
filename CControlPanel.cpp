@@ -120,7 +120,17 @@ void CControlPanel::OnBnClickedDeleteobject()
 	auto& delObj = objList[location];
 	ENDPROGRAM = true;
 	while (!ENDDRAW) {} // 没有结束绘制则等待
+#if 1
+	// 回收面片中的对象（也可以直接移除对应的面片，但是留下的阴影太难看了）
+	auto& patchs = scene.GetRadiationPatchs();
+	for (size_t i = 0; i < patchs.size(); ++i)
+		if (patchs[i].obj == delObj)
+			patchs[i].obj = nullptr;
 	delete delObj; delObj = nullptr;
+#else
+	// 若这样太耗时了，可以选择不删除对象，但是在该类中
+	// 创建一个保存删除对象的vector 当结束程序时一并删除
+#endif
 	// 从objList中删除当前对象
 	objList.erase(objList.begin() + location);
 	// 更新list列表

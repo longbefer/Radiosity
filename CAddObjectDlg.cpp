@@ -146,11 +146,11 @@ void CAddObjectDlg::OnBnClickedConfirmadd()
 		}
 		else if (objName == TEXT("三角形")) {
 			if (bLight) {
-				obj = new LightShape<Triangle>(Point3d(-std::sqrt(3.0), -1.0, .5) * 100.0, Point3d(std::sqrt(3.0), -1.0, .5) * 100.0, Point3d(.0, -1.0, -1.0) * 100.0);
+				obj = new LightShape<Triangle>(Point3d(-std::sqrt(3.0), -1.0, .5), Point3d(std::sqrt(3.0), -1.0, .5), Point3d(.0, -1.0, -1.0));
 				dynamic_cast<LightShape<Triangle>*>(obj)->SetNormal(YNormal, YNormal, YNormal);
 			}
 			else {
-				obj = new Triangle(Point3d(-std::sqrt(3.0), -1.0, .5) * 100.0, Point3d(std::sqrt(3.0), -1.0, .5) * 100.0, Point3d(.0, -1.0, -1.0) * 100.0);
+				obj = new Triangle(Point3d(-std::sqrt(3.0), -1.0, .5), Point3d(std::sqrt(3.0), -1.0, .5), Point3d(.0, -1.0, -1.0));
 				((Triangle*)(obj))->SetNormal(YNormal, YNormal, YNormal);
 			}
 		}
@@ -332,6 +332,21 @@ void CAddObjectDlg::OnBnClickedbtchoosetexture()
 	UpdateData(FALSE); // 再更新控件
 }
 
+bool IsLight(GameObject* obj) {
+	if (dynamic_cast<Light*>(obj)) return true;
+	else if (dynamic_cast<LightShape<Box>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<BezierPatch>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<Compound>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<Grid>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<ObjFile>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<User::Rectangle>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<SmoothRectangle>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<SmoothTriangle>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<Sphere>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<Teapot>*>(obj)) return true;
+	else if (dynamic_cast<LightShape<Triangle>*>(obj)) return true;
+	return false;
+}
 
 BOOL CAddObjectDlg::OnInitDialog()
 {
@@ -358,7 +373,7 @@ BOOL CAddObjectDlg::OnInitDialog()
 		}
 		UpdateData(TRUE);
 		// 选择是否是灯光
-		if (dynamic_cast<Light*>(modifyObj))
+		if (IsLight(modifyObj))
 			LightCheckButton.SetCheck(TRUE);
 		else LightCheckButton.SetCheck(FALSE);
 		LightCheckButton.EnableWindow(false);

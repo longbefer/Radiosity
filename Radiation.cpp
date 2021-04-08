@@ -375,7 +375,7 @@ void Radiation::Calculate()
 		if (ENDPROGRAM) return;  // 当结束程序时，退出渲染
 	} while (maxColor > Color(kEpsilon, kEpsilon, kEpsilon)); // 解近0时收敛并停止
 #else
-	//#pragma omp parallel for schedule(dynamic, 1) // OpenMP
+	#pragma omp parallel for schedule(dynamic, 1) // OpenMP
 	for (int i = 0; i < n; ++i) { // in 面片
 		for (int j = i; j < n; ++j) { // out 面片
 			double areai = patchs[i].GetArea(), areaj = patchs[j].GetArea();

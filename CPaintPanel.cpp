@@ -50,19 +50,40 @@ DWORD __stdcall DoubleBuffer(void* pWind)
 	pDC->SetWindowExt(rect.Width(), rect.Height());//设置窗口范围
 	pDC->SetViewportExt(rect.Width(), -rect.Height());//x轴水平向右，y轴垂直向上
 	pDC->SetViewportOrg(rect.Width() / 2, rect.Height() / 2);//客户区中心为原点
+	rect.OffsetRect(-rect.Width() / 2, -rect.Height() / 2);
 	CDC memDC;//内存DC	
 	memDC.CreateCompatibleDC(pDC);//建立与显示pDC兼容的memDC
-	CBitmap NewBitmap, * pOldBitmap;//内存中承载图像的临时位图 
-	NewBitmap.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height());//创建兼容位图 
-	pOldBitmap = memDC.SelectObject(&NewBitmap);//将兼容位图选入memDC
-	rect.OffsetRect(-rect.Width() / 2, -rect.Height() / 2);
 	memDC.SetMapMode(MM_ANISOTROPIC);//memDC自定义坐标系
 	memDC.SetWindowExt(rect.Width(), rect.Height());
 	memDC.SetViewportExt(rect.Width(), -rect.Height());
 	memDC.SetViewportOrg(rect.Width() / 2, rect.Height() / 2);
+	CBitmap NewBitmap, * pOldBitmap;//内存中承载图像的临时位图 
+#if 1
+	NewBitmap.CreateCompatibleBitmap(pDC, rect.Width(), rect.Height());//创建兼容位图 
+	pOldBitmap = memDC.SelectObject(&NewBitmap);//将兼容位图选入memDC
 	//memDC.FillSolidRect(rect, pDC->GetBkColor());//设置背景色
 	if (pView->s) pView->s->Draw(&memDC); // 绘制对象
 	//if (pView->s) pView->s->Draw(pDC);
+#else 
+	// 减少SetPixel的调用，以减少变换绘制的不流畅
+	Paint* paint = new Paint;
+	paint->InitDeepBuffer(rect.Width(), rect.Height(), 1.0E1);
+
+	// 执行绘制函数，获取点
+	size_t totalSize = rect.Width() * rect.Height() * 4ULL; // 4为rgba
+	std::unique_ptr<BYTE[]> buff = std::make_unique<BYTE[]>(totalSize);
+	memset(buff.get(), 0, totalSize);
+	if (pView->s) {
+		pView->s->SetWindowsRect(rect.Width(), rect.Height()); // 设置绘制窗口的宽高
+		pView->s->SetProject(project); // 视点
+		pView->s->Draw(paint, buff, totalSize);  // 绘制，缓冲器
+	}
+	delete paint;
+
+	// 执行赋值，将图片给memDC
+	NewBitmap.CreateBitmap(rect.Width(), rect.Height(), sizeof(BYTE), 32, buff.get());
+	pOldBitmap = memDC.selectObject(&NewBitmap);
+#endif
 	pDC->BitBlt(rect.left, rect.top, rect.Width(), rect.Height(), &memDC, -rect.Width() / 2, -rect.Height() / 2, SRCCOPY);//将内存memDC中的位图拷贝到显示pDC中
 	memDC.SelectObject(pOldBitmap);//恢复位图
 	NewBitmap.DeleteObject();//删除位图

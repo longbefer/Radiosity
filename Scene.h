@@ -24,6 +24,9 @@ public:
 	std::vector<GameObject*>& GetObjects() {
 		return gameObject;
 	}
+	auto& GetRadiationPatchs() {
+		return radiation.patchs;
+	}
 
 private:
 	void Build();

@@ -78,7 +78,7 @@ protected:
 	Matrix transformMatrix;
 
 	// for texture;
-	std::unique_ptr<Image> img;
+	std::unique_ptr<Image> img = nullptr;
 
 	// for control panel
 	std::string name;
