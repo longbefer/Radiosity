@@ -43,7 +43,7 @@ public:
 		GameObject::SetTransformMatrix(matrix);
 		for (size_t i = 0; i < sizeof(vertices) / sizeof(Point3d); ++i) {
 			this->vertices[i] = transformMatrix * this->vertices[i];
-			this->normal[i] = transformMatrix * this->normal[i];
+			this->normal[i] = (transformMatrix * this->normal[i]).Normalized();
 		}
 	}
 

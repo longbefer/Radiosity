@@ -12,7 +12,7 @@ public:
     //using Rectangle::Rectangle;
     SmoothRectangle(const Point3d& point, const Vector3d& a, const Vector3d& b, const Normal& n) :User::Rectangle(point, a, b, n) {
         for (size_t i = 0; i < sizeof(pointNormal) / sizeof(Normal); ++i)
-            pointNormal[0] = n;
+            pointNormal[i] = n;
     }
 
     void SetTexture(const Texture& t1 = BL, const Texture& t2 = BR, const Texture& t3 = TR, const Texture&t4 = TL) {
