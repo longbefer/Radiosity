@@ -110,7 +110,7 @@ void Paint::GouraudShading(CDC* pDC, const Patch&patch)
 					// 若不存在纹理则进行颜色的线性插值，存在纹理则取纹理颜色与当前面片的incident相乘即为当前的颜色
 					if (patch.obj && patch.obj->GetImage()) {
 						Texture t = LinearInterp(x, pLeft[n].position.x, pRight[n].position.x, pLeft[n].texture, pRight[n].texture);
-						clr = (patch.obj->GetTextureImagePixel(t) * patch.incident).Clamp();
+						clr = (patch.obj->GetTextureImagePixel(t) * patch.excident).Clamp();
 					}
 					zBuffer[offsetX][offsetY] = CurrentDepth;//使用当前采样点的深度更新深度缓冲器
 					pDC->SetPixelV(x, y, RGB(clr.r * 255, clr.g * 255, clr.b * 255));

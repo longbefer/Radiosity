@@ -129,6 +129,9 @@
     <ClInclude Include="Sampler.h">
       <Filter>采样</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>辐射度</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp">

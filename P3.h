@@ -75,6 +75,9 @@ public:
 	enum class AXIS { X, Y, Z };
 public:
 	Matrix(void) { SetIdentity(); }
+	Matrix(const std::initializer_list<double>& list) {
+		this->SetMatrix(list);
+	}
 	Matrix(const Matrix& mat) {
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
@@ -108,12 +111,25 @@ public:
 				m[i][j] = m[i][j] / d;
 		return(*this);
 	}
+	void SetMatrix(double matrix[4][4]) {
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				m[i][j] = matrix[i][j];
+	}
 	void SetIdentity(void) {
 		for (int i = 0; i < 4; i++)
 			for (int j = 0; j < 4; j++)
 				if (i == j) m[i][j] = 1.0;
 				else m[i][j] = 0.0;
 	};
+	void SetMatrix(const std::initializer_list<double>& list) {
+		assert(list.size() == 16ULL);
+		size_t i = 0ULL;
+		for (auto& d : list) {
+			m[i / 4ULL][i % 4ULL] = d;
+			++i;
+		}
+	}
 	Matrix SetTranslate(double tx, double ty, double tz) {
 		SetIdentity();
 		m[0][3] = tx;
@@ -517,7 +533,7 @@ public:
 	}
 
 	auto operator/(const double& ratio) const {
-		if (ratio == 0.0) return (*this);
+		if (ratio == 0.0) throw std::error_condition();
 		return Color(this->r / ratio, this->g / ratio, this->b / ratio, this->alpha / ratio);
 	}
 
@@ -566,7 +582,7 @@ public:
 	}
 
 	void operator/=(const double& ratio) {
-		if (ratio == 0.0) return;
+		if (ratio == 0.0) throw std::error_condition();
 		this->r /= ratio;
 		this->g /= ratio;
 		this->b /= ratio;
@@ -583,15 +599,18 @@ public:
 	}
 
 	bool operator<(const Color& c) {
-		return ((this->r < c.r) && (this->g < c.g) && (this->b < c.b));
+		//return ((this->r < c.r) && (this->g < c.g) && (this->b < c.b));		
+		return this->RGB2GRAY() <= c.RGB2GRAY();
 	}
 
 	bool operator>(const Color& c) {
-		return ((this->r > c.r) && (this->g > c.g) && (this->b > c.b));
+		//return ((this->r > c.r) && (this->g > c.g) && (this->b > c.b));
+		return this->RGB2GRAY() > c.RGB2GRAY();
 	}
 
 	bool operator<=(const Color& c) {
-		return ((this->r <= c.r) && (this->g <= c.g) && (this->b <= c.b));
+		//return ((this->r <= c.r) && (this->g <= c.g) && (this->b <= c.b));
+		return this->RGB2GRAY() <= c.RGB2GRAY();
 	}
 
 	void Clamped() {
@@ -611,6 +630,11 @@ public:
 		temp.Clamped();
 		return temp;
 	}
+
+	double RGB2GRAY() const {
+		return 0.30 * this->r + 0.59 * this->g + 0.11 * this->b;
+	}
+
 public:
 	double r, g, b, alpha;
 };

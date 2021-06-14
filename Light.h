@@ -35,7 +35,7 @@ public:
     static_assert((std::is_base_of<GameObject, T>::value), "must inhert GameObject class");
 
 };
-
+// reference: https://www.zhihu.com/question/34929124
 struct is_kind_of_ {
     template <template <class> class TM, class T> static std::true_type check(TM<T>);
     template <template <class> class TM> static std::false_type check(...);

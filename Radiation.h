@@ -6,7 +6,7 @@
 // -----------------------------------
 //#define Gauss_Siedel     // Gauss Siedel方法
 //#define Normal_Result    // 解一般方程
-//#define Southwell        // 逐步求精
+#define Southwell        // 逐步求精
 // -----------------------------------
 class Radiation
 {

@@ -42,7 +42,7 @@ void Scene::Init()
 
 void Scene::Rendered()
 {
-	radiation.Rendered(6);
+	radiation.Rendered(16);
 	bFinish = true;
 }
 
@@ -66,17 +66,9 @@ double Scene::HitObject(const Ray& ray) const
 
 void Scene::Build()
 {
-#ifdef Southwell
-#if USERADIATIONSMOOTH
-	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 300, 100));
-#else 
 	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 295, 100));
-#endif
-#else 
-	Light* light = new Light(Point3d(-100, 275, -100), Point3d(100, 295, 100));
-#endif
 	light->SetColor(White);
-	light->SetEmmision(White);
+	light->SetEmmision(10*White);
 	light->SetRecursionTimes(3);
 
 	Color gray(0.6, 0.6, 0.6, 1.0);
@@ -148,12 +140,12 @@ void Scene::Build()
 	//box5->SetTextureImage("D:\\User\\Picture\\Saved Pictures\\Temp\\888.jpg");
 
 	// ²èºø
-	//Teapot* t = new Teapot();
-	//t->SetColor(Color(1.0, 1.0, 0.0, 0.0));
-	//t->SetEmmision(Black);
-	//t->SetRecursionTimes(4);
-	//Matrix scaleMatrix = scaleMatrix.SetScale(50, 50, 50).Translate(0, -200, 0).Rotate(45, Matrix::AXIS::Y);
-	//t->SetTransformMatrix(scaleMatrix);
+	Teapot* t = new Teapot();
+	t->SetColor(Color(1.0, 1.0, 0.0, 0.0));
+	t->SetEmmision(Black);
+	t->SetRecursionTimes(4);
+	Matrix scaleMatrix = scaleMatrix.SetScale(50, 50, 50).Translate(0, -200, 0).Rotate(45, Matrix::AXIS::Y);
+	t->SetTransformMatrix(scaleMatrix);
 
 	//double r = 300.0;
 	//double m = 0.5523;

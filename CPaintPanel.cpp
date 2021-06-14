@@ -82,7 +82,7 @@ DWORD __stdcall DoubleBuffer(void* pWind)
 
 	// 执行赋值，将图片给memDC
 	NewBitmap.CreateBitmap(rect.Width(), rect.Height(), sizeof(BYTE), 32, buff.get());
-	pOldBitmap = memDC.selectObject(&NewBitmap);
+	pOldBitmap = memDC.SelectObject(&NewBitmap);
 #endif
 	pDC->BitBlt(rect.left, rect.top, rect.Width(), rect.Height(), &memDC, -rect.Width() / 2, -rect.Height() / 2, SRCCOPY);//将内存memDC中的位图拷贝到显示pDC中
 	memDC.SelectObject(pOldBitmap);//恢复位图

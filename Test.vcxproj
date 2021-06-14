@@ -193,6 +193,7 @@
     <ClInclude Include="BezierPatch.h" />
     <ClInclude Include="Box.h" />
     <ClInclude Include="CAddObjectDlg.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="CControlPanel.h" />
     <ClInclude Include="Compound.h" />
     <ClInclude Include="CPaintPanel.h" />

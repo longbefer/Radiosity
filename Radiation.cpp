@@ -60,7 +60,7 @@ void Radiation::Draw(CDC* pDC)
 		if (patch.vertices.size() == 3) {
 			for (int loop = 0; loop < 3; ++loop) {
 				point3[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
-				point3[loop].excident = patch.excident;
+				point3[loop].excident = patch.excident.Clamp();
 				point3[loop].normal = patch.normal;
 				point3[loop].texture = patch.vertices[loop].texture;
 			}
@@ -71,7 +71,7 @@ void Radiation::Draw(CDC* pDC)
 		{
 			for (int loop = 0; loop < static_cast<int>(patch.vertices.size()); ++loop) {
 				point4[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
-				point4[loop].excident = patch.excident;
+				point4[loop].excident = patch.excident.Clamp();
 				point4[loop].normal = patch.normal;
 				point4[loop].texture = patch.vertices[loop].texture;
 			}
@@ -104,50 +104,64 @@ void Radiation::Calculate()
 		auto& I = patchs[i].incident;
 		auto& R = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
 		auto& E = patchs[i].obj->GetEmmision();
-		patchs[i].excident = ((I * R) + E).Clamp();
+		if (IsLight(patchs[i].obj) == false)
+			patchs[i].excident = ((I * R) + E).Clamp();
 	}
 	bFinish = true;
+	for (int i = 0; i < n; ++i)
+		patchs[i].incident = Black;
 #endif
 #ifdef Normal_Result
+	//Color increase = Black;
+	//do {
 #pragma omp parallel for schedule(dynamic, 1) // OpenMP
-	for (int i = 0; i < n; ++i) {
-		if (!bFinish) {
-			for (int j = i; j < n; ++j) {
-				// 存储形状因子
-				double fac = GetViewFactor(patchs[i], patchs[j]);
-				factors[i][j] = patchs[j].GetArea() * fac;
-				factors[j][i] = patchs[i].GetArea() * fac;
+		for (int i = 0; i < n; ++i) {
+			if (!bFinish) {
+				for (int j = i; j < n; ++j) {
+					// 存储形状因子
+					double fac = GetViewFactor(patchs[i], patchs[j]);
+					factors[i][j] = patchs[j].GetArea() * fac;
+					factors[j][i] = patchs[i].GetArea() * fac;
+				}
 			}
+			for (int j = 0; j < n; ++j)
+				patchs[i].incident += patchs[j].excident * factors[i][j];
 		}
-		for (int j = 0; j < n; ++j)
-			patchs[i].incident += patchs[j].excident * factors[i][j];
-	}
-	// 然后计算表面辐射度
-	for (int i = 0; i < n; ++i) {
-		auto& I = patchs[i].incident;
-		auto& R = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
-		auto& E = patchs[i].obj->GetEmmision();
-		patchs[i].excident = ((I * R) + E).Clamp();
-		//patchs[i].excident = (patchs[i].incident * patchs[i].obj->GetReflectance() + patchs[i].obj->GetEmmision()).Clamp();
-	}
-	bFinish = true;
+		// 然后计算表面辐射度
+		for (int i = 0; i < n; ++i) {
+			auto& I = patchs[i].incident;
+			auto& R = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
+			auto& E = patchs[i].obj->GetEmmision();
+			auto&& excident = ((I * R) + E).Clamp();
+			//increase = excident - patchs[i].excident;
+			if (IsLight(patchs[i].obj) == false)
+				patchs[i].excident = excident;
+			//patchs[i].excident = (patchs[i].incident * patchs[i].obj->GetReflectance() + patchs[i].obj->GetEmmision()).Clamp();
+		}
+		bFinish = true;
+		for (int i = 0; i < n; ++i)
+			patchs[i].incident = Black;
+	//} while (increase.RGB2GRAY() > 0.1);
 #endif 
 #ifdef Southwell
 	// 获取能量最大的面片的索引
 	int index = 0;
 	// 获取能量最大的面片可以释放的能量（注，在这里此项乘以了面积）
 	Color maxColor = Black;
+	Color maxSet = Black;
 	// 泛光
+	bool bAmbient = true;
 	Color ambient = Black;
 	// 泛光反射项
 	const Color invAvgReflect = 1.0 / (White - avgReflect);
 	do {
-		maxColor = Black; ambient = Black;
+		maxColor = Black; ambient = Black; maxSet = Black;
 		// 在每一个面片中，选择最大的待辐射能量
 		for (int i = 0; i < n; ++i) {
 			Color currentColor = increase[i] * patchs[i].GetArea();
-			if (currentColor > maxColor) { // 关键在于如何定义颜色谁比谁大
-				maxColor = currentColor;
+			if (currentColor > maxSet) { // 关键在于如何定义颜色谁比谁大
+				maxSet = currentColor;
+				maxColor = increase[i];
 				index = i;
 			}
 			ambient += currentColor;
@@ -159,17 +173,18 @@ void Radiation::Calculate()
 		for (int i = 0; i < n; ++i) {
 			Color refect = patchs[i].obj->GetImage() ? patchs[i].GetReflectance() : patchs[i].obj->GetReflectance();
 			double factor = GetViewFactor(patchs[index], patchs[i]);
-			Color rad = factor * refect * maxColor;
+			Color rad = factor * refect * maxSet;
 			increase[i] += rad;
-			if (bFinish) patchs[i].excident += rad;
-			else patchs[i].excident += (rad + ambient * refect);
-			patchs[i].incident += factor * maxColor;
-			patchs[i].excident.Clamped();
+			if (IsLight(patchs[i].obj) == false)
+				patchs[i].excident = (patchs[i].excident + rad).Clamp();
+				//else patchs[i].excident = (patchs[i].excident + (rad + ambient * refect)).Clamp();
+			//patchs[i].incident += factor * maxColor;
+			//patchs[i].excident.Clamped();
 		}
 		increase[index] = Black;
 		bFinish = true;
 		if (ENDPROGRAM) return;  // 当结束程序时，退出渲染
-	} while (maxColor > Color(kEpsilon, kEpsilon, kEpsilon)); // 解近0时收敛并停止
+	} while (maxColor.RGB2GRAY() > 0.006); // 解近0时收敛并停止
 #endif
 }
 
@@ -209,7 +224,7 @@ double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 #ifdef Southwell
 	int samplerNumber = 16;   // 采样的数量
 #else 
-	int samplerNumber = 64;   // 采样点数量
+	int samplerNumber = 16;   // 采样点数量
 #endif
 	Sampler sampler[2];       // 两个面片分别采样
 	double avg_factor = 0.0;  // 获取平均的形状因子
@@ -223,6 +238,8 @@ double Radiation::GetViewFactor(const Patch&in, const Patch&out)
 			sampler[1].TriangleSample(out.vertices[0].position, out.vertices[1].position, out.vertices[2].position) :
 			sampler[1].RectangleSample(out.vertices[0].position, out.vertices[1].position - out.vertices[0].position,
 				out.vertices[3].position - out.vertices[0].position);
+		//Point3d inPoint = (in.vertices[0].position + in.vertices[1].position + in.vertices[2].position) / 3.0;
+		//Point3d outPoint = (out.vertices[0].position + out.vertices[1].position + out.vertices[2].position) / 3.0;
 
 		const Vector3d pointNormal = outPoint - inPoint;
 		Vector3d vectorij = pointNormal.Normalized();
@@ -304,7 +321,7 @@ void Radiation::Draw(CDC* pDC)
 		if (patch.vertices.size() == 3) {
 			for (int loop = 0; loop < 3; ++loop) {
 				point3[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
-				point3[loop].excident = patch.vertices[loop].excident;
+				point3[loop].excident = patch.vertices[loop].excident.Clamp();
 				point3[loop].normal = patch.vertices[loop].normal;
 				point3[loop].texture = patch.vertices[loop].texture;
 			}
@@ -315,7 +332,7 @@ void Radiation::Draw(CDC* pDC)
 		{
 			for (int loop = 0; loop < static_cast<int>(patch.vertices.size()); ++loop) {
 				point4[loop].position = project.PerspectiveProjection(patch.vertices[loop].position);
-				point4[loop].excident = patch.vertices[loop].excident;
+				point4[loop].excident = patch.vertices[loop].excident.Clamp();
 				point4[loop].normal = patch.vertices[loop].normal;
 				point4[loop].texture = patch.vertices[loop].texture;
 			}
@@ -335,45 +352,46 @@ void Radiation::Calculate()
 	int index = 0;
 	// 获取能量最大的面片可以释放的能量（注，在这里此项乘以了面积）
 	Color maxColor = Black;
+	Color maxSet = Black;
 	do {
-		maxColor = Black;
+		maxColor = Black; maxSet = Black;
 		// 在每一个面片中，选择最大的待辐射能量
 		for (int i = 0; i < n; ++i) {
 			Color currentColor = increase[i] * patchs[i].GetArea();
-			if (currentColor > maxColor) {
-				maxColor = currentColor;
+			if (currentColor > maxSet) {
+				maxSet = currentColor;
+				maxColor = increase[i];
 				index = i;
 			}
 		}
 		// 给每个面片添加辐射能量
 #pragma omp parallel for schedule(dynamic, 1) // OpenMP
 		for (int i = 0; i < n; ++i) {
-			Color rad = Black, incid = Black; // rad 为出射辐射度增量， incid 为入射辐射度
+			if (IsLight(patchs[i].obj)) continue;
+			Color rad = Black/*, incid = Black*/; // rad 为出射辐射度增量， incid 为入射辐射度
 			for (int k = 0; k < patchs[i].vertices.size(); ++k) {
-				Color signalRad = Black, signalIncident = Black;
+				Color signalRad = Black/*, signalIncident = Black*/;
 				for (int s = 0; s < patchs[index].vertices.size(); ++s) {
 					double factor = GetViewFactor(patchs[index], patchs[i], s, k);
-					signalRad += factor * patchs[i].obj->GetReflectance() * maxColor;
-					signalIncident += factor * maxColor;
+					signalRad += factor * patchs[i].obj->GetReflectance() * maxSet;
+					//signalIncident += factor * maxSet;
 				}
 				signalRad /= static_cast<double>(patchs[index].vertices.size());
-				signalIncident /= static_cast<double>(patchs[index].vertices.size());
-				patchs[i].vertices[k].excident += signalRad;
-				patchs[i].vertices[k].excident.Clamped();
-				patchs[i].vertices[k].incident += signalIncident;
+				//signalIncident /= static_cast<double>(patchs[index].vertices.size());
+				patchs[i].vertices[k].excident = (signalRad + patchs[i].vertices[k].excident).Clamp();
+				//patchs[i].vertices[k].incident += signalIncident;
 				rad += signalRad;
-				incid += signalIncident;
+				//incid += signalIncident;
 			}
 			Color avgRad = rad / static_cast<double>(patchs[i].vertices.size());
-			incid /= static_cast<double>(patchs[i].vertices.size());
+			//incid /= static_cast<double>(patchs[i].vertices.size());
 			increase[i] += avgRad;
-			patchs[i].excident += avgRad;
-			patchs[i].excident.Clamped();
-			patchs[i].incident += incid; // 给入射辐射度增加能量，便于之后的计算
+			patchs[i].excident = (avgRad + patchs[i].excident).Clamp();
+			//patchs[i].incident += incid; // 给入射辐射度增加能量，便于之后的计算
 		}
 		increase[index] = Black;
 		if (ENDPROGRAM) return;  // 当结束程序时，退出渲染
-	} while (maxColor > Color(kEpsilon, kEpsilon, kEpsilon)); // 解近0时收敛并停止
+	} while (maxColor.RGB2GRAY() > 0.006); // 解近0时收敛并停止
 #else
 	#pragma omp parallel for schedule(dynamic, 1) // OpenMP
 	for (int i = 0; i < n; ++i) { // in 面片
@@ -411,12 +429,19 @@ void Radiation::Calculate()
 		auto& E = patchs[i].obj->GetEmmision();
 		// 每个点的辐射度
 		for (size_t k = 0; k < patchs[i].vertices.size(); ++k)
-			patchs[i].vertices[k].excident = ((patchs[i].vertices[k].incident * R) + E).Clamp();
+			if (IsLight(patchs[i].obj) == false)
+				patchs[i].vertices[k].excident = ((patchs[i].vertices[k].incident * R) + E).Clamp();
 		// 计算该in面片的辐射度
-		patchs[i].excident = ((I * R) + E).Clamp();
+		if (IsLight(patchs[i].obj) == false)
+			patchs[i].excident = ((I * R) + E).Clamp();
 		//if (ENDPROGRAM) return; // 加在这里可以很快结束，但是也破坏了这个并行性
 	}
 	bFinish = true;
+	for (auto& patch : patchs) {
+		patch.incident = Black;
+		for (auto& vertrix : patch.vertices)
+			vertrix.incident = Black;
+	}
 #endif
 }
 

@@ -9,6 +9,7 @@
 
 // 添加要在此处预编译的标头
 #include "framework.h"
+#include "GameObject.h"
 const double kEpsilon = 1.0E-5;
-
+bool IsLight(GameObject* obj);
 #endif //PCH_H
