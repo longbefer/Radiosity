@@ -12,4 +12,6 @@
 #include "GameObject.h"
 const double kEpsilon = 1.0E-5;
 bool IsLight(GameObject* obj);
+// 是否使用漫游
+#define USE_CAMERA
 #endif //PCH_H

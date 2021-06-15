@@ -1,6 +1,8 @@
 #pragma once
 #include "GameObject.h"
 #include "Radiation.h"
+#include "Camera.h"
+#include "Paint.h"
 
 // 矩形, 茶壶, 三角形, 球, 立方体, Bezier曲面
 enum class GameObjections { Rectangle, Teapot, Triangle, Sphere, Box, BezierPatch };
@@ -13,7 +15,11 @@ public:
 
 	void Init();
 	void Rendered();
+#ifdef USE_CAMERA
+	void Draw(Paint&, std::unique_ptr<BYTE[]>&);
+#else
 	void Draw(CDC*);
+#endif
 
 	double HitObject(const Ray&)const;
 
@@ -27,6 +33,11 @@ public:
 	auto& GetRadiationPatchs() {
 		return radiation.patchs;
 	}
+#ifdef USE_CAMERA
+	void SetCamera(Camera& p) {
+		radiation.SetCamera(p);
+	}
+#endif
 
 private:
 	void Build();

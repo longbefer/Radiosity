@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Scene.h"
+#include "Paint.h"
 
 #include "Box.h"
 #include "Rectangle.h"
@@ -46,10 +47,17 @@ void Scene::Rendered()
 	bFinish = true;
 }
 
+#ifdef USE_CAMERA
+void Scene::Draw(Paint& p, std::unique_ptr<BYTE[]>& buff)
+{
+	radiation.Draw(p, buff);
+}
+#else
 void Scene::Draw(CDC* pDC)
 {
 	radiation.Draw(pDC);
 }
+#endif
 
 double Scene::HitObject(const Ray& ray) const
 {

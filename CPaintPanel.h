@@ -3,6 +3,11 @@
 
 // CPaintPanel 视图
 #include "Scene.h"
+#ifdef USE_CAMERA
+#include "Paint.h"
+#include "Camera.h"
+#endif
+
 class CPaintPanel : public CView
 {
 	DECLARE_DYNCREATE(CPaintPanel)
@@ -24,6 +29,11 @@ public:
 #endif
 #endif
 protected:
+#ifdef USE_CAMERA
+	Paint paint;
+	Camera camera;
+	bool bCatch = false;
+#endif
 public:
 	Scene* s = nullptr;
 	bool bDraw = true;
@@ -35,6 +45,8 @@ protected:
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnClose();
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
 
 

@@ -1,5 +1,7 @@
 #pragma once
 #include "Patch.h"
+#include "Camera.h"
+#include "Paint.h"
 // 是否使用多点采样（雾）
 #define USERADIATIONSMOOTH 1
 // 注意，以下三种定义为不同算法的定义，请不要同时打开
@@ -74,7 +76,11 @@ public:
 #endif
 	void Init();
 	void Rendered(size_t n);
+#ifdef USE_CAMERA
+	void Draw(Paint&, std::unique_ptr<BYTE[]>&);
+#else
 	void Draw(CDC* pDC);
+#endif
 
 private:
 	// 计算辐射度
@@ -101,5 +107,12 @@ public:
 	Color* increase = nullptr;
 #endif // 使用逐步求精的算法实现
 #endif // 使用四角点来绘制
+#ifdef USE_CAMERA
+	void SetCamera(Camera& p) {
+		this->camera = &p;
+	}
+
+	Camera* camera = nullptr;
+#endif
 };
 
