@@ -20,7 +20,11 @@ public:
 public:
 	void Init();
 	void Rendered(size_t n);
+#ifdef USE_CAMERA
+	void Draw(Paint&, std::unique_ptr<BYTE[]>&);
+#else
 	void Draw(CDC* pDC);
+#endif
 
 private:
 	// º∆À„∑¯…‰∂»

@@ -47,6 +47,45 @@ void Radiation::Rendered(size_t n)
 	DeleteMatrix();
 }
 
+#ifdef USE_CAMERA
+void Radiation::Draw(Paint& paint, std::unique_ptr<BYTE[]>& buffer)
+{
+	if (!camera || buffer == nullptr) return;
+
+	P3 point3[3];
+	P3 point4[4];
+
+	//for (auto& patch : patchs) {
+	for (size_t i = 0; i < patchs.size(); ++i) {
+		auto& patch = patchs[i];
+		if (patch.vertices.size() == 3) {
+			for (int loop = 0; loop < 3; ++loop) {
+				point3[loop].position = camera->PerspectiveProjection(patch.vertices[loop].position);
+				point3[loop].position /= point3[loop].position.w;
+				point3[loop].excident = patch.excident.Clamp();
+				point3[loop].normal = patch.vertices[loop].normal;
+				point3[loop].texture = patch.vertices[loop].texture;
+			}
+			paint.SetPoint(point3[0], point3[1], point3[2]);
+			paint.GouraudShading(buffer, patch);
+		}
+		else
+		{
+			for (int loop = 0; loop < static_cast<int>(patch.vertices.size()); ++loop) {
+				point4[loop].position = camera->PerspectiveProjection(patch.vertices[loop].position);
+				point4[loop].position /= point4[loop].position.w;
+				point4[loop].excident = patch.excident.Clamp();
+				point4[loop].normal = patch.vertices[loop].normal;
+				point4[loop].texture = patch.vertices[loop].texture;
+			}
+			paint.SetPoint(point4[0], point4[1], point4[2]);
+			paint.GouraudShading(buffer, patch);
+			paint.SetPoint(point4[0], point4[2], point4[3]);
+			paint.GouraudShading(buffer, patch);
+		}
+	}
+}
+#else
 void Radiation::Draw(CDC* pDC)
 {
 	Paint paint;
@@ -82,6 +121,7 @@ void Radiation::Draw(CDC* pDC)
 		}
 	}
 }
+#endif
 
 void Radiation::Calculate()
 {
